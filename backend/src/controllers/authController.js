@@ -1,31 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const mockUsers = [
-  {
-    id: 1,
-    email: 'student@example.com',
-    password: 'password123',
-    role: 'student',
-    name: 'test001 eiei',
-    major: 'Computer Science',
-  },
-  {
-    id: 2,
-    email: 'company@example.com',
-    password: 'password123',
-    role: 'company',
-    name: 'TechNova Solutions',
-    industry: 'Technology',
-  },
-  {
-    id: 3,
-    email: 'professor@example.com',
-    password: 'password123',
-    role: 'professor',
-    name: 'Dr. James Smith',
-    department: 'Computer Science',
-  },
-];
+const { mockUsers } = require('../data/mockData');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 

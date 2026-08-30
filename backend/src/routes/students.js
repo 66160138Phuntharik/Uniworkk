@@ -5,6 +5,7 @@ const {
   getStudents,
   getStudentById,
   getApplications,
+  applyForJob,
   submitReport,
   getStudentProfile,
   updateStudentProfile,
@@ -40,6 +41,9 @@ router.patch('/:id/documents/:docId/primary', verifyToken, setPrimaryDocument);
 
 // GET /api/students/:id/applications
 router.get('/:id/applications', verifyToken, getApplications);
+
+// POST /api/students/:id/applications
+router.post('/:id/applications', verifyToken, applyForJob);
 
 // POST /api/students/:id/reports
 router.post('/:id/reports', verifyToken, requireRole('student'), submitReport);
