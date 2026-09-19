@@ -7,7 +7,7 @@ const {
   setPrimaryDocument,
 } = require('./studentDocumentController');
 const { getApplications, applyForJob } = require('./studentApplicationController');
-const { submitReport } = require('./studentReportController');
+const { getStudentReports, submitReport } = require('./studentReportController');
 
 // GET /api/students ดูรายชื่อนิสิตทั้งหมด
 const getStudents = (req, res) => {
@@ -41,5 +41,6 @@ module.exports = {
   applyForJob,
 
   // Weekly Reports
+  getStudentReports,
   submitReport,
 };
