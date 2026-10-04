@@ -1,0 +1,274 @@
+/* ── CompanyProfile.module.css ────────────────────────────────── */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 36px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.heading {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.subheading {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: var(--dark);
+  border: none;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.saveBtn:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+/* ── Company Identity Banner ───────────────────────────────── */
+.identityBanner {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: var(--radius);
+  padding: 32px 36px;
+  color: var(--white);
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  max-width: 960px;
+}
+
+.identityLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.companyLogo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: var(--primary);
+  color: var(--dark);
+  font-size: 2.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  flex-shrink: 0;
+}
+
+.identityMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.companyTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.companyName {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.verifiedBadge {
+  background: rgba(25, 135, 84, 0.25);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tagline {
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+.bannerStats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  flex-wrap: wrap;
+}
+
+.bannerStatItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Content Stack ─────────────────────────────────────────── */
+.profileStack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 960px;
+}
+
+/* ── Card Styles ───────────────────────────────────────────── */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f3f5;
+  margin-bottom: 4px;
+}
+
+.formRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .formRow2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--dark);
+  outline: none;
+  background: var(--bg);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.textarea {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--dark);
+  outline: none;
+  background: var(--bg);
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.textarea:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--dark);
+  color: var(--white);
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  animation: slideIn 0.25s ease;
+  border-left: 4px solid var(--primary);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

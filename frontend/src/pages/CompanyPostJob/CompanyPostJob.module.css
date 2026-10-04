@@ -1,0 +1,427 @@
+/* ── CompanyPostJob.module.css ────────────────────────────────── */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 36px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.heading {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.subheading {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backBtn:hover {
+  background: #f1f3f5;
+}
+
+/* ── Form & Preview Grid ───────────────────────────────────── */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Form Card ─────────────────────────────────────────────── */
+.formCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f3f5;
+  margin-bottom: 4px;
+}
+
+.formRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formRow3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .formRow2,
+  .formRow3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reqStar {
+  color: var(--danger);
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.input {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--dark);
+  outline: none;
+  background: var(--bg);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.textarea {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--dark);
+  outline: none;
+  background: var(--bg);
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.textarea:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+/* ── Skills Tag Adder ──────────────────────────────────────── */
+.skillsInputWrap {
+  display: flex;
+  gap: 8px;
+}
+
+.addSkillBtn {
+  background: var(--dark);
+  color: var(--white);
+  border: none;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.addSkillBtn:hover {
+  background: #343a40;
+}
+
+.skillsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.skillBadge {
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.removeSkillBtn {
+  background: transparent;
+  border: none;
+  color: #6366f1;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.removeSkillBtn:hover {
+  color: var(--danger);
+}
+
+.suggestedChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.suggestedLabel {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.chipBtn {
+  background: #f1f3f5;
+  border: 1px solid #dee2e6;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chipBtn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--dark);
+}
+
+/* ── Form Actions ──────────────────────────────────────────── */
+.formActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f3f5;
+}
+
+.cancelActionBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.cancelActionBtn:hover {
+  background: #f8f9fa;
+  color: var(--dark);
+}
+
+.submitBtn {
+  background: var(--primary);
+  color: var(--dark);
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.submitBtn:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+/* ── Preview Column ────────────────────────────────────────── */
+.previewCol {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.previewCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.previewBadgeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.previewJobTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.previewCompany {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.previewMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.previewSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.previewSectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dark);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.previewText {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.previewList {
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--dark);
+  color: var(--white);
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  animation: slideIn 0.25s ease;
+  border-left: 4px solid var(--success);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

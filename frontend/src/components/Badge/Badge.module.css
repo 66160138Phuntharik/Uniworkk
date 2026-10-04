@@ -1,0 +1,15 @@
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.success  { background: var(--success-bg);   color: var(--success); }
+.warning  { background: var(--warning-bg);   color: var(--primary-dark-text); }
+.danger   { background: var(--danger-bg);    color: var(--danger); }
+.secondary{ background: var(--secondary-bg); color: var(--secondary); }
+.info     { background: rgba(13,202,240,.12); color: #087990; }

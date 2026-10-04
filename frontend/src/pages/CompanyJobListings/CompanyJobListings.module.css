@@ -1,0 +1,556 @@
+/* ── CompanyJobListings.module.css ────────────────────────────── */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 36px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.heading {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.subheading {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.postBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: var(--dark);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.postBtn:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: var(--white);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Stats Row ─────────────────────────────────────────────── */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Controls Bar ──────────────────────────────────────────── */
+.controlsCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 18px 24px;
+  box-shadow: var(--shadow-xs);
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--dark);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.selectInput {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  background: var(--white);
+  color: var(--dark);
+  outline: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.selectInput:focus {
+  border-color: var(--primary);
+}
+
+.statusTabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--border);
+}
+
+.statusTabBtn {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.statusTabActive {
+  background: var(--white);
+  color: var(--dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Jobs Grid ─────────────────────────────────────────────── */
+.jobsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jobCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jobCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.jobHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.jobTitleWrap {
+  flex: 1;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.jobTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.categoryTag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f3f5;
+  color: var(--text-secondary);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.jobMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.salaryHighlight {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.jobHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.jobDesc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.skillsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skillChip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.jobFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid #f1f3f5;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.applicantStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.applicantBubble {
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+}
+
+.actionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f3f5;
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.viewBtn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--dark);
+  transform: translateY(-1px);
+}
+
+.viewApplicantsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--dark);
+  border: 1px solid var(--dark);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--white);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.viewApplicantsBtn:hover {
+  background: var(--primary);
+  color: var(--dark);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.toggleStatusBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggleOpen {
+  background: #fff8e1;
+  color: #856404;
+  border-color: #ffeeba;
+}
+
+.toggleOpen:hover {
+  background: #ffe8a1;
+}
+
+.toggleClose {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-color: #c8e6c9;
+}
+
+.toggleClose:hover {
+  background: #c8e6c9;
+}
+
+.deleteBtn {
+  background: transparent;
+  border: 1px solid #f8d7da;
+  color: var(--danger);
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.deleteBtn:hover {
+  background: var(--danger-bg);
+}
+
+/* ── Empty State ───────────────────────────────────────────── */
+.emptyState {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 56px 24px;
+  text-align: center;
+  box-shadow: var(--shadow-xs);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.emptyTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+
+.emptyText {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  max-width: 400px;
+  margin: 0 auto 20px auto;
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--dark);
+  color: var(--white);
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  animation: slideIn 0.25s ease;
+}
+
+.toastSuccess {
+  border-left: 4px solid #198754;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Modal ─────────────────────────────────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--white);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 460px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.modalText {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cancelBtn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmDeleteBtn {
+  background: var(--danger);
+  border: none;
+  color: var(--white);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.confirmDeleteBtn:hover {
+  background: #bb2d3b;
+}

@@ -1,0 +1,642 @@
+/* ── CompanyApplicants.module.css ────────────────────────────── */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 36px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.heading {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.subheading {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.backBtn:hover {
+  background: #f1f3f5;
+  border-color: #adb5bd;
+  transform: translateX(-2px);
+}
+
+.activeJobFilterBadge {
+  margin-left: 6px;
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.clearJobFilterBtn {
+  background: #f1f3f5;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.clearJobFilterBtn:hover {
+  background: #e2e8f0;
+  color: var(--dark);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: var(--white);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Stats Row ─────────────────────────────────────────────── */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Filter Controls ───────────────────────────────────────── */
+.controlsCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 18px 24px;
+  box-shadow: var(--shadow-xs);
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.controlsTopRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--dark);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.selectJobInput {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  background: var(--white);
+  color: var(--dark);
+  outline: none;
+  cursor: pointer;
+  font-weight: 500;
+  max-width: 320px;
+}
+
+.selectJobInput:focus {
+  border-color: var(--primary);
+}
+
+/* ── Status Tabs ───────────────────────────────────────────── */
+.statusTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid #f1f3f5;
+  padding-top: 14px;
+}
+
+.statusTabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.statusTabBtn:hover {
+  border-color: var(--primary);
+  color: var(--dark);
+}
+
+.statusTabActive {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: var(--white);
+}
+
+.tabBadge {
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 0.75rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.statusTabActive .tabBadge {
+  background: var(--primary);
+  color: var(--dark);
+  font-weight: 700;
+}
+
+/* ── Applicants List ───────────────────────────────────────── */
+.applicantsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applicantCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 22px 26px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.applicantCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardMainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.candidateLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.candidateAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 700;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid #e0e7ff;
+}
+
+.candidateMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.candidateNameRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.candidateName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.studentCode {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: #f8f9fa;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.academicInfo {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gpaHighlight {
+  font-weight: 700;
+  color: #0d6efd;
+}
+
+.honorBadge {
+  background: #e6f4ea;
+  color: #137333;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.candidateRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Status Select Dropdown in Card */
+.statusSelect {
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.statusSelectReviewing {
+  border-color: #ced4da;
+  color: #495057;
+  background: #f8f9fa;
+}
+
+.statusSelectInterviewing {
+  border-color: #ffc107;
+  color: #856404;
+  background: #fff9db;
+}
+
+.statusSelectAccepted {
+  border-color: #198754;
+  color: #155724;
+  background: #d4edda;
+}
+
+.statusSelectRejected {
+  border-color: #dc3545;
+  color: #721c24;
+  background: #f8d7da;
+}
+
+/* ── Card Detail Sub-Row ───────────────────────────────────── */
+.detailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.appliedPosition {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dark);
+  font-weight: 600;
+}
+
+.appliedDate {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.resumeDocWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resumeFileName {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.previewDocBtn {
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.previewDocBtn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--dark);
+}
+
+.coverNoteBox {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-style: italic;
+  padding-left: 12px;
+  border-left: 3px solid var(--primary);
+}
+
+/* ── Empty State ───────────────────────────────────────────── */
+.emptyState {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 56px 24px;
+  text-align: center;
+  box-shadow: var(--shadow-xs);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.emptyTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+
+.emptyText {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ── Modal for Resume Preview ──────────────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+}
+
+.previewModal {
+  background: var(--white);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: #1e293b;
+  color: var(--white);
+}
+
+.modalHeaderTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.closeModalBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.closeModalBtn:hover {
+  color: var(--white);
+}
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.resumeHeaderCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+}
+
+.resumeSectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 4px;
+}
+
+.resumeText {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.skillsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modalFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.downloadLink {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0d6efd;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.downloadLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--dark);
+  color: var(--white);
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  animation: slideIn 0.25s ease;
+  border-left: 4px solid var(--primary);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

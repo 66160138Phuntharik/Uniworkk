@@ -1,0 +1,44 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--bg);
+  padding: 24px;
+  gap: 12px;
+}
+
+.code {
+  font-size: 6rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.text {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.btn {
+  display: inline-block;
+  background: var(--dark);
+  color: var(--white);
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.15s;
+}
+.btn:hover {
+  background: var(--dark-2);
+}

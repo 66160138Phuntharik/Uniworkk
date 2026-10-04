@@ -1,0 +1,562 @@
+/* ── Layout ────────────────────────────────────────────────── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 36px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pageTitle {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pageSubtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.newReportBtn {
+  background: var(--primary);
+  color: var(--dark);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  border: none;
+}
+
+.newReportBtn:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+.backBtn {
+  background: var(--white);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.backBtn:hover {
+  background: #f1f3f5;
+  color: var(--dark);
+}
+
+/* ── Internship Overview Card ──────────────────────────────── */
+.overviewCard {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.overviewTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.placementInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.companyAvatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #212529, #343a40);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.placementMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.companyName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roleTag {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.studentMetaBadge {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Progress Bar Block ────────────────────────────────────── */
+.progressBlock {
+  border-top: 1px solid #f1f3f5;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+}
+
+.progressLabel {
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.progressValue {
+  font-weight: 700;
+  color: #b78103;
+}
+
+.progressBarBg {
+  width: 100%;
+  height: 8px;
+  background: #f1f3f5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* ── Feed Header ───────────────────────────────────────────── */
+.feedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.feedTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedCount {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* ── Reports Feed ────────────────────────────────────────── */
+.reportsFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.reportCard {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-xs);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reportCard:hover {
+  box-shadow: var(--shadow);
+  border-color: #cbd5e1;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #f1f3f5;
+  padding-bottom: 14px;
+}
+
+.cardTitleBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.weekTag {
+  background: var(--dark);
+  color: var(--white);
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.weekDates {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.submittedDateNote {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ── Single Content Area ───────────────────────────────────── */
+.reportContent {
+  font-size: 0.94rem;
+  color: #334155;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Card Footer Actions ───────────────────────────────────── */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f3f5;
+  padding-top: 12px;
+}
+
+.editBtn {
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  color: var(--dark);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.editBtn:hover {
+  background: #e9ecef;
+}
+
+/* ── Toast Alert ───────────────────────────────────────────── */
+.toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: slideDown 0.3s ease;
+}
+
+.toastSuccess {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+}
+
+.toastInfo {
+  background: #cff4fc;
+  color: #055160;
+  border: 1px solid #b6effb;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Modal Overlay & Form ──────────────────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalBox {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: scaleUp 0.2s ease;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: color 0.15s;
+}
+
+.modalCloseBtn:hover {
+  color: var(--dark);
+}
+
+.modalBody {
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formRowTwo {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.formInput,
+.formSelect {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fdfdfd;
+  color: var(--dark);
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.formInput:focus,
+.formSelect:focus {
+  border-color: var(--primary);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+/* ── Single Large Text Area ────────────────────────────────── */
+.largeTextarea {
+  width: 100%;
+  min-height: 240px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fdfdfd;
+  color: var(--dark);
+  font-size: 0.94rem;
+  line-height: 1.65;
+  transition: all 0.15s ease;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.largeTextarea:focus {
+  border-color: var(--primary);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+.helpText {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.modalFooter {
+  padding: 16px 26px;
+  border-top: 1px solid var(--border);
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.submitBtn {
+  background: var(--primary);
+  color: var(--dark);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 9px 22px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.submitBtn:hover {
+  background: #e0a800;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main {
+    padding: 20px 16px;
+  }
+  .formRowTwo {
+    grid-template-columns: 1fr;
+  }
+  .overviewTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
