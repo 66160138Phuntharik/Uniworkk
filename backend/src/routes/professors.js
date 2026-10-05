@@ -1,24 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+
 const {
+  getStudentList,
+  getStudentById,
   getStudentOverview,
+} = require('../controllers/professorStudentController');
+
+const {
   getReports,
-  reviewReport,
-} = require('../controllers/professorController');
+  getReportById,
+  submitReportFeedback,
+} = require('../controllers/professorReportController');
 
-// api/professors/student
-router.get('/students', verifyToken, requireRole('professor'), getStudentOverview);
+// --- Student List Endpoints ---
+// GET /api/professors/students - Get all assigned students & stats
+router.get('/students', getStudentList);
 
-// api/professors/reports
-router.get('/reports', verifyToken, requireRole('professor'), getReports);
+// GET /api/professors/students/:id - Get single student details & reports
+router.get('/students/:id', getStudentById);
 
-// api/professors/reports/id/review
-router.patch(
-  '/reports/:reportId/review',
-  verifyToken,
-  requireRole('professor'),
-  reviewReport
-);
+// GET /api/professors/overview - Semester overview stats
+router.get('/overview', getStudentOverview);
+
+// --- Weekly Reports Endpoints ---
+// GET /api/professors/reports - Get all weekly reports (supports ?status=pending|reviewed)
+router.get('/reports', getReports);
+
+// GET /api/professors/reports/:reportId - Get single report by ID
+router.get('/reports/:reportId', getReportById);
+
+// POST /api/professors/reports/:reportId/feedback - Submit professor comments or feedback
+router.post('/reports/:reportId/feedback', submitReportFeedback);
+
+// PATCH /api/professors/reports/:reportId/review - Review/update feedback (alias for testing)
+router.patch('/reports/:reportId/review', submitReportFeedback);
 
 module.exports = router;
