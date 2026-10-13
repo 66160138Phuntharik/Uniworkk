@@ -1,16 +1,29 @@
 const supabase = require('../config/supabase');
-const { mockCompanyProfiles } = require('../data/mockData');
 
 // GET /api/companies/profile
 const getCompanyProfile = async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('company_profiles')
-      .select('*')
-      .limit(1)
-      .maybeSingle();
+  const companyName = req.query.company || req.user?.name;
 
-    if (!error && data) {
+  try {
+    let query = supabase.from('company_profiles').select('*');
+    if (companyName) {
+      query = query.ilike('company_name', companyName.trim());
+    }
+
+    let { data, error } = await query.limit(1).maybeSingle();
+
+    if (!data && companyName) {
+      // Try fetching any first company profile
+      const fallbackQuery = await supabase.from('company_profiles').select('*').limit(1).maybeSingle();
+      data = fallbackQuery.data;
+    }
+
+    if (error) {
+      console.error('Supabase getCompanyProfile error:', error.message);
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (data) {
       const profile = {
         id: data.id,
         companyName: data.company_name,
@@ -29,20 +42,52 @@ const getCompanyProfile = async (req, res) => {
       };
       return res.json({ profile });
     }
-  } catch (err) {
-    console.warn('Supabase getCompanyProfile fallback:', err.message);
-  }
 
-  const profile = mockCompanyProfiles[0];
-  res.json({ profile });
+    // Default clean profile if none exists yet
+    return res.json({
+      profile: {
+        companyName: req.user?.name || '',
+        tagline: '',
+        industry: '',
+        foundedYear: '',
+        companySize: '',
+        website: '',
+        contactEmail: req.user?.email || '',
+        contactPhone: '',
+        location: '',
+        address: '',
+        description: '',
+        perks: [],
+        techStack: [],
+      },
+    });
+  } catch (err) {
+    console.error('getCompanyProfile error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
 };
 
 // PUT /api/companies/profile
 const updateCompanyProfile = async (req, res) => {
   try {
+    const companyName = req.body.companyName || req.user?.name;
+
+    // Check existing
+    let targetId = 1;
+    const { data: existing } = await supabase
+      .from('company_profiles')
+      .select('id')
+      .ilike('company_name', (companyName || '').trim())
+      .maybeSingle();
+
+    if (existing) {
+      targetId = existing.id;
+    }
+
     const { data: updated, error } = await supabase
       .from('company_profiles')
-      .update({
+      .upsert({
+        id: targetId,
         company_name: req.body.companyName,
         tagline: req.body.tagline,
         industry: req.body.industry,
@@ -54,41 +99,40 @@ const updateCompanyProfile = async (req, res) => {
         location: req.body.location,
         address: req.body.address,
         description: req.body.description,
-        perks: req.body.perks,
-        tech_stack: req.body.techStack,
-      })
-      .eq('id', 1)
+        perks: req.body.perks || [],
+        tech_stack: req.body.techStack || [],
+      }, { onConflict: 'id' })
       .select()
       .maybeSingle();
 
-    if (!error && updated) {
-      return res.json({
-        message: 'Company profile updated in Supabase successfully.',
-        profile: {
-          id: updated.id,
-          companyName: updated.company_name,
-          tagline: updated.tagline,
-          industry: updated.industry,
-          foundedYear: updated.founded_year,
-          companySize: updated.company_size,
-          website: updated.website,
-          contactEmail: updated.contact_email,
-          contactPhone: updated.contact_phone,
-          location: updated.location,
-          address: updated.address,
-          description: updated.description,
-          perks: updated.perks,
-          techStack: updated.tech_stack,
-        },
-      });
+    if (error) {
+      console.error('Supabase updateCompanyProfile error:', error.message);
+      return res.status(400).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase updateCompanyProfile fallback:', err.message);
-  }
 
-  const profile = mockCompanyProfiles[0];
-  Object.assign(profile, req.body);
-  res.json({ message: 'Company profile updated successfully.', profile });
+    return res.json({
+      message: 'Company profile updated successfully.',
+      profile: {
+        id: updated.id,
+        companyName: updated.company_name,
+        tagline: updated.tagline,
+        industry: updated.industry,
+        foundedYear: updated.founded_year,
+        companySize: updated.company_size,
+        website: updated.website,
+        contactEmail: updated.contact_email,
+        contactPhone: updated.contact_phone,
+        location: updated.location,
+        address: updated.address,
+        description: updated.description,
+        perks: updated.perks,
+        techStack: updated.tech_stack,
+      },
+    });
+  } catch (err) {
+    console.error('updateCompanyProfile error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
 };
 
 module.exports = {

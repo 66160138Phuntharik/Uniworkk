@@ -6,19 +6,6 @@ import Badge from '../../components/Badge/Badge';
 import { getProfessorNavItems } from '../../utils/professorNav';
 import styles from './ProfessorDashboard.module.css';
 
-const DEFAULT_STUDENTS = [
-  { name: 'Alex Johnson', major: 'Computer Science', company: 'TechNova Solutions', status: 'placed' },
-  { name: 'Maria Chen', major: 'Data Science', company: 'DataRock', status: 'placed' },
-  { name: 'James Park', major: 'Information Technology', company: '—', status: 'searching' },
-  { name: 'Thanh Sritong', major: 'Software Engineering', company: 'DataRock', status: 'placed' },
-];
-
-const DEFAULT_REPORTS = [
-  { id: 3, name: 'Alex Johnson', week: 3, note: 'Having trouble connecting to API', status: 'pending' },
-  { id: 4, name: 'Thanh Sritong', week: 2, note: 'Data pipeline validation finished', status: 'pending' },
-  { id: 5, name: 'Maria Chen', week: 3, note: 'Tableau dashboard completed', status: 'pending' },
-];
-
 const STATUS_MAP = {
   placed: { label: 'Placed / Interning', variant: 'success' },
   interviewing: { label: 'Interviewing', variant: 'warning' },
@@ -28,15 +15,15 @@ const STATUS_MAP = {
 export default function ProfessorDashboard() {
   const navigate = useNavigate();
 
-  const [students, setStudents] = useState(DEFAULT_STUDENTS);
-  const [reports, setReports] = useState(DEFAULT_REPORTS);
+  const [students, setStudents] = useState([]);
+  const [reports, setReports] = useState([]);
   const [stats, setStats] = useState({
-    total: 6,
-    placed: 4,
-    interviewing: 1,
-    searching: 1,
+    total: 0,
+    placed: 0,
+    interviewing: 0,
+    searching: 0,
   });
-  const [pendingCount, setPendingCount] = useState(3);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     // Fetch students overview
@@ -134,24 +121,32 @@ export default function ProfessorDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((s, i) => {
-                    const statusInfo = STATUS_MAP[s.status] || {
-                      label: s.status,
-                      variant: 'secondary',
-                    };
-                    return (
-                      <tr key={i}>
-                        <td className={styles.tdName}>{s.name}</td>
-                        <td>{s.major}</td>
-                        <td className={styles.tdCompany}>{s.company || '—'}</td>
-                        <td>
-                          <Badge variant={statusInfo.variant}>
-                            {statusInfo.label}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {students.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8' }}>
+                        No students enrolled yet
+                      </td>
+                    </tr>
+                  ) : (
+                    students.map((s, i) => {
+                      const statusInfo = STATUS_MAP[s.status] || {
+                        label: s.status,
+                        variant: 'secondary',
+                      };
+                      return (
+                        <tr key={i}>
+                          <td className={styles.tdName}>{s.name}</td>
+                          <td>{s.major}</td>
+                          <td className={styles.tdCompany}>{s.company || '—'}</td>
+                          <td>
+                            <Badge variant={statusInfo.variant}>
+                              {statusInfo.label}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

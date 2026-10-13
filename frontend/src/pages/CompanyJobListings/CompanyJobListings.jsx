@@ -6,57 +6,6 @@ import Badge from '../../components/Badge/Badge';
 import { getCompanyNavItems } from '../../utils/companyNav';
 import styles from './CompanyJobListings.module.css';
 
-const DEFAULT_JOBS = [
-  {
-    id: 1,
-    companyId: 2,
-    company: 'TechNova Solutions',
-    category: 'Software & Web',
-    title: 'Frontend Developer Intern (React / Next.js)',
-    location: 'Bangkok',
-    workMode: 'Hybrid',
-    type: 'Full-time Internship',
-    salary: '15,000 THB/month',
-    description: 'Work alongside our product engineering team to build state-of-the-art web applications using React, TypeScript, and modern CSS.',
-    skills: ['React', 'TypeScript', 'CSS3', 'Git', 'REST API'],
-    applicants: 12,
-    status: 'open',
-    postedDate: '2026-05-10',
-  },
-  {
-    id: 8,
-    companyId: 2,
-    company: 'TechNova Solutions',
-    category: 'Software & Web',
-    title: 'Full Stack Engineering Intern (Node.js & React)',
-    location: 'Bangkok',
-    workMode: 'Hybrid',
-    type: 'Full-time Internship',
-    salary: '16,000 THB/month',
-    description: 'Join our agile core engineering team to build scalable microservices and intuitive web dashboards. Work with senior architects on real client deliverables.',
-    skills: ['TypeScript', 'Node.js', 'React', 'PostgreSQL', 'Docker'],
-    applicants: 8,
-    status: 'open',
-    postedDate: '2026-05-12',
-  },
-  {
-    id: 9,
-    companyId: 2,
-    company: 'TechNova Solutions',
-    category: 'Design & Creative',
-    title: 'UI/UX Product Design Intern',
-    location: 'Bangkok',
-    workMode: 'On-site',
-    type: 'Full-time Internship',
-    salary: '14,000 THB/month',
-    description: 'Work alongside our product team to design design systems, conduct user interviews, and create high-fidelity prototypes in Figma.',
-    skills: ['Figma', 'UI Design', 'Prototyping', 'Design Systems', 'User Research'],
-    applicants: 5,
-    status: 'closed',
-    postedDate: '2026-04-20',
-  },
-];
-
 const CATEGORIES = [
   'All Categories',
   'Software & Web',
@@ -70,7 +19,7 @@ const CATEGORIES = [
 export default function CompanyJobListings() {
   const navigate = useNavigate();
 
-  const [jobs, setJobs] = useState(DEFAULT_JOBS);
+  const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'open' | 'closed'
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
@@ -82,12 +31,12 @@ export default function CompanyJobListings() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Fetch real data if backend server is active
+  // Fetch real data from backend server
   useEffect(() => {
     fetch('http://localhost:5000/api/companies/jobs')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.jobs && data.jobs.length > 0) {
+        if (data && Array.isArray(data.jobs)) {
           setJobs(data.jobs);
         }
       })

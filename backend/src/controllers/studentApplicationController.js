@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const { mockApplications, mockDocuments } = require('../data/mockData');
 
 // GET /api/students/:id/applications ดูรายการสมัครฝึกงานของนิสิต
 const getApplications = async (req, res) => {
@@ -12,26 +11,28 @@ const getApplications = async (req, res) => {
       .eq('student_id', studentId)
       .order('id', { ascending: false });
 
-    if (!error && apps) {
-      const mapped = apps.map((a) => ({
-        id: a.id,
-        studentId: a.student_id,
-        jobId: a.job_id,
-        company: a.company,
-        position: a.position,
-        date: a.date,
-        status: a.status,
-        resumeAttached: a.resume_attached,
-        coverNote: a.cover_note,
-      }));
-      return res.json({ applications: mapped, total: mapped.length });
+    if (error) {
+      console.error('Supabase getApplications error:', error.message);
+      return res.status(500).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase getApplications fallback:', err.message);
-  }
 
-  const apps = mockApplications.filter((a) => a.studentId === studentId);
-  res.json({ applications: apps, total: apps.length });
+    const mapped = (apps || []).map((a) => ({
+      id: a.id,
+      studentId: a.student_id,
+      jobId: a.job_id,
+      company: a.company,
+      position: a.position,
+      date: a.date,
+      status: a.status,
+      resumeAttached: a.resume_attached,
+      coverNote: a.cover_note,
+    }));
+
+    return res.json({ applications: mapped, total: mapped.length });
+  } catch (err) {
+    console.error('getApplications error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
 };
 
 // POST /api/students/:id/applications สมัครตำแหน่งฝึกงาน
@@ -70,7 +71,22 @@ const applyForJob = async (req, res) => {
       .order('id', { ascending: false })
       .limit(1)
       .maybeSingle();
-    const nextAppId = (maxA?.id || 0) + 1;
+    let finalResumeAttached = resumeName;
+    if (!finalResumeAttached) {
+      try {
+        const { data: primaryDoc } = await supabase
+          .from('documents')
+          .select('file_name, title')
+          .eq('student_id', studentId)
+          .eq('is_primary', true)
+          .maybeSingle();
+        if (primaryDoc) {
+          finalResumeAttached = primaryDoc.file_name || primaryDoc.title;
+        }
+      } catch (docErr) {
+        console.warn('Could not fetch primary doc for application:', docErr.message);
+      }
+    }
 
     const { data: newApp, error } = await supabase
       .from('applications')
@@ -82,7 +98,7 @@ const applyForJob = async (req, res) => {
         position,
         date: currentDate,
         status: 'reviewing',
-        resume_attached: resumeName || 'Primary_Resume.pdf',
+        resume_attached: finalResumeAttached || 'Primary_Resume.pdf',
         cover_note: coverNote || '',
       })
       .select()
@@ -127,39 +143,9 @@ const applyForJob = async (req, res) => {
       return res.status(201).json({ message: `Successfully applied to ${company} for ${position}!`, application: formatted });
     }
   } catch (err) {
-    console.warn('Supabase applyForJob exception:', err.message);
+    console.error('Supabase applyForJob error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-
-  // Fallback to mock data
-  const existing = mockApplications.find(
-    (a) =>
-      a.studentId === studentId &&
-      (a.jobId === parseInt(jobId) ||
-        (a.company?.toLowerCase() === company?.toLowerCase() &&
-          a.position?.toLowerCase() === position?.toLowerCase()))
-  );
-  if (existing) {
-    return res.status(400).json({ error: 'You have already applied for this position.' });
-  }
-
-  const primaryResume =
-    mockDocuments.find((d) => d.studentId === studentId && d.isPrimary) ||
-    mockDocuments.find((d) => d.studentId === studentId);
-
-  const newApp = {
-    id: mockApplications.length ? Math.max(...mockApplications.map((a) => a.id)) + 1 : 1,
-    studentId,
-    jobId: jobId ? parseInt(jobId) : null,
-    company,
-    position,
-    date: currentDate,
-    status: 'reviewing',
-    resumeAttached: resumeName || primaryResume?.fileName || 'Primary_Resume.pdf',
-    coverNote: coverNote || '',
-  };
-
-  mockApplications.unshift(newApp);
-  res.status(201).json({ message: `Successfully applied to ${company} for ${position}!`, application: newApp });
 };
 
 module.exports = {

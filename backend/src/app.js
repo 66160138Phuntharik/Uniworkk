@@ -7,6 +7,7 @@ const studentRoutes = require('./routes/students');
 const companyRoutes = require('./routes/companies');
 const professorRoutes = require('./routes/professors');
 
+const path = require('path');
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // check
 app.get('/api/health', (req, res) => {

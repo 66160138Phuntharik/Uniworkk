@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const { mockStudents, mockProfiles, mockDocuments } = require('../data/mockData');
 
 // GET /api/students/:id/profile ดูโปรไฟล์
 const getStudentProfile = async (req, res) => {
@@ -18,72 +17,71 @@ const getStudentProfile = async (req, res) => {
       .eq('student_id', studentId)
       .maybeSingle();
 
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', studentId)
+      .maybeSingle();
+
     const { data: docs } = await supabase
       .from('documents')
       .select('*')
       .eq('student_id', studentId)
       .order('is_primary', { ascending: false });
 
-    if (student || profile) {
+    const { data: acceptedApp } = await supabase
+      .from('applications')
+      .select('company, position')
+      .eq('student_id', studentId)
+      .eq('status', 'accepted')
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (student || profile || user) {
+      const finalCompany = student?.company || acceptedApp?.company || null;
+      const finalPosition = student?.position || acceptedApp?.position || null;
+      const finalStatus = finalCompany ? 'placed' : (student?.status || 'searching');
+
       const mergedProfile = {
         studentId,
-        studentCode: student?.student_code || profile?.student_code || '66160138',
-        nameTh: profile?.name_th || student?.name || 'นิสิต',
-        nameEn: student?.name || profile?.name_en || 'Student',
+        studentCode: student?.student_code || profile?.student_code || '',
+        nameTh: profile?.name_th || student?.name || user?.name || '',
+        nameEn: student?.name || profile?.name_en || user?.name || '',
         faculty: student?.faculty || profile?.faculty || 'Faculty of Informatics',
-        department: student?.major || profile?.department || 'Computer Science',
+        department: student?.major || profile?.department || user?.major || 'Computer Science',
         year: student?.year || profile?.year || '4th Year',
         gpa: student?.gpa !== undefined && student?.gpa !== null
           ? parseFloat(student.gpa)
           : (profile?.gpa ? parseFloat(profile.gpa) : 3.5),
-        email: student?.email || profile?.email || 'student@university.edu',
-        status: student?.status || 'searching',
-        company: student?.company || null,
-        position: student?.position || null,
+        email: student?.email || profile?.email || user?.email || '',
+        status: finalStatus,
+        company: finalCompany,
+        position: finalPosition,
       };
 
-      const mappedDocs = (docs && docs.length > 0)
-        ? docs.map((d) => ({
-            id: d.id,
-            studentId: d.student_id,
-            title: d.title,
-            type: d.type,
-            fileName: d.file_name,
-            fileSize: d.file_size || '1.4 MB',
-            fileType: d.file_type || 'application/pdf',
-            fileUrl: d.file_url || null,
-            uploadDate: d.upload_date,
-            isPrimary: d.is_primary,
-            status: d.status || 'verified',
-          }))
-        : [];
+      const mappedDocs = (docs || []).map((d) => ({
+        id: d.id,
+        studentId: d.student_id,
+        title: d.title,
+        type: d.type,
+        fileName: d.file_name,
+        fileSize: d.file_size || '1.4 MB',
+        fileType: d.file_type || 'application/pdf',
+        fileUrl: d.file_url || null,
+        uploadDate: d.upload_date,
+        isPrimary: d.is_primary,
+        status: d.status || 'verified',
+      }));
 
       return res.json({ profile: mergedProfile, documents: mappedDocs });
     }
-  } catch (err) {
-    console.warn('Supabase query failed, falling back to mock data:', err.message);
-  }
 
-  // Graceful fallback to mock data
-  const basicInfo = mockStudents.find((s) => s.id === studentId);
-  const detailedProfile = mockProfiles.find((p) => p.studentId === studentId);
-
-  if (!basicInfo && !detailedProfile) {
     return res.status(404).json({ error: 'Student profile not found.' });
+  } catch (err) {
+    console.error('getStudentProfile error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-
-  const fallbackProfile = {
-    ...(basicInfo || {}),
-    ...(detailedProfile || {
-      studentId,
-      studentCode: '66160138',
-      nameEn: basicInfo?.name || 'Alex Johnson',
-      email: basicInfo?.email || 'test001@go.buu.ac.th',
-    }),
-  };
-
-  const studentDocs = mockDocuments.filter((d) => d.studentId === studentId);
-  res.json({ profile: fallbackProfile, documents: studentDocs });
 };
 
 // PUT /api/students/:id/profile แก้ไขโปรไฟล์
@@ -122,7 +120,7 @@ const updateStudentProfile = async (req, res) => {
           faculty: faculty,
           department: department,
           gpa: parsedGpa,
-          student_code: studentCode || '66160138',
+          student_code: studentCode || '',
           updated_at: new Date().toISOString(),
         })
         .eq('student_id', studentId)
@@ -130,11 +128,20 @@ const updateStudentProfile = async (req, res) => {
         .maybeSingle();
       updatedProfile = data;
     } else {
+      const { data: maxP } = await supabase
+        .from('student_profiles')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextPId = (maxP?.id || 0) + 1;
+
       const { data } = await supabase
         .from('student_profiles')
         .insert({
+          id: nextPId,
           student_id: studentId,
-          student_code: studentCode || '66160138',
+          student_code: studentCode || '',
           name_th: nameTh,
           name_en: nameEn,
           faculty: faculty,
@@ -149,44 +156,22 @@ const updateStudentProfile = async (req, res) => {
 
     const returnProfile = {
       studentId,
-      studentCode: updatedProfile?.student_code || studentCode || '66160138',
+      studentCode: updatedProfile?.student_code || studentCode || '',
       nameTh: updatedProfile?.name_th || nameTh,
       nameEn: nameEn,
       faculty: faculty,
       department: department,
-      gpa: parsedGpa || 3.8,
+      gpa: parsedGpa || 3.5,
     };
 
     return res.json({
-      message: 'Profile updated successfully in Supabase.',
+      message: 'Profile updated successfully.',
       profile: returnProfile,
     });
   } catch (err) {
-    console.error('Supabase update failed, falling back:', err);
+    console.error('updateStudentProfile error:', err);
+    return res.status(500).json({ error: err.message });
   }
-
-  // Fallback to in-memory mock update
-  let profileIdx = mockProfiles.findIndex((p) => p.studentId === studentId);
-  if (profileIdx === -1) {
-    const newProfile = { studentId, ...req.body };
-    mockProfiles.push(newProfile);
-    return res.json({ message: 'Profile created successfully.', profile: newProfile });
-  }
-
-  mockProfiles[profileIdx] = {
-    ...mockProfiles[profileIdx],
-    ...req.body,
-    studentId,
-  };
-
-  const studentIdx = mockStudents.findIndex((s) => s.id === studentId);
-  if (studentIdx !== -1) {
-    if (req.body.nameEn) mockStudents[studentIdx].name = req.body.nameEn;
-    if (req.body.gpa) mockStudents[studentIdx].gpa = req.body.gpa;
-    if (req.body.department) mockStudents[studentIdx].major = req.body.department;
-  }
-
-  res.json({ message: 'Profile updated successfully.', profile: mockProfiles[profileIdx] });
 };
 
 module.exports = {

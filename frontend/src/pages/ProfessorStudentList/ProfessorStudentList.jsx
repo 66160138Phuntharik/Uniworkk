@@ -6,123 +6,6 @@ import Badge from '../../components/Badge/Badge';
 import { getProfessorNavItems } from '../../utils/professorNav';
 import styles from './ProfessorStudentList.module.css';
 
-const DEFAULT_STUDENTS = [
-  {
-    id: 1,
-    studentCode: '66160138',
-    name: 'Alex Johnson',
-    email: 'test001@go.buu.ac.th',
-    phone: '+66 89 123 4567',
-    faculty: 'Faculty of Informatics',
-    major: 'Computer Science',
-    year: '4th Year',
-    gpa: 3.8,
-    status: 'placed',
-    company: 'TechNova Solutions',
-    position: 'Frontend Developer Intern',
-    supervisor: 'Sarah Jenkins (Senior Frontend Lead)',
-    supervisorEmail: 'sjenkins@technova.example.com',
-    startDate: '2026-06-01',
-    endDate: '2026-10-31',
-    assignedProfessor: 'Dr. James Smith',
-  },
-  {
-    id: 2,
-    studentCode: '65160042',
-    name: 'Maria Chen',
-    email: 'test002@go.buu.ac.th',
-    phone: '+66 81 234 5678',
-    faculty: 'Faculty of Informatics',
-    major: 'Data Science',
-    year: '4th Year',
-    gpa: 3.6,
-    status: 'placed',
-    company: 'DataRock',
-    position: 'Data Analyst Intern',
-    supervisor: 'David Wong (Head of Analytics)',
-    supervisorEmail: 'dwong@datarock.example.com',
-    startDate: '2026-06-15',
-    endDate: '2026-11-15',
-    assignedProfessor: 'Dr. James Smith',
-  },
-  {
-    id: 3,
-    studentCode: '65160219',
-    name: 'James Park',
-    email: 'test003@go.buu.ac.th',
-    phone: '+66 82 345 6789',
-    faculty: 'Faculty of Informatics',
-    major: 'Information Technology',
-    year: '4th Year',
-    gpa: 3.2,
-    status: 'searching',
-    company: null,
-    position: null,
-    supervisor: null,
-    supervisorEmail: null,
-    startDate: null,
-    endDate: null,
-    assignedProfessor: 'Dr. James Smith',
-  },
-  {
-    id: 4,
-    studentCode: '65160085',
-    name: 'Thanh Sritong',
-    email: 'test004@go.buu.ac.th',
-    phone: '+66 83 456 7890',
-    faculty: 'Faculty of Informatics',
-    major: 'Software Engineering',
-    year: '4th Year',
-    gpa: 3.72,
-    status: 'placed',
-    company: 'DataRock',
-    position: 'Backend Software Intern',
-    supervisor: 'Preecha Suksan (Engineering Manager)',
-    supervisorEmail: 'preecha@datarock.example.com',
-    startDate: '2026-06-01',
-    endDate: '2026-10-31',
-    assignedProfessor: 'Dr. James Smith',
-  },
-  {
-    id: 5,
-    studentCode: '65160312',
-    name: 'Kittisak Somboon',
-    email: 'test005@go.buu.ac.th',
-    phone: '+66 84 567 8901',
-    faculty: 'Faculty of Informatics',
-    major: 'Digital Media & Software',
-    year: '4th Year',
-    gpa: 3.45,
-    status: 'interviewing',
-    company: 'TechNova Solutions',
-    position: 'UI/UX Product Design Intern',
-    supervisor: null,
-    supervisorEmail: null,
-    startDate: null,
-    endDate: null,
-    assignedProfessor: 'Dr. James Smith',
-  },
-  {
-    id: 6,
-    studentCode: '66160099',
-    name: 'Siriporn Prasert',
-    email: 'test006@go.buu.ac.th',
-    phone: '+66 85 678 9012',
-    faculty: 'Faculty of Informatics',
-    major: 'Computer Science',
-    year: '4th Year',
-    gpa: 3.91,
-    status: 'placed',
-    company: 'CloudScale Tech',
-    position: 'Cloud DevOps Intern',
-    supervisor: 'Michael Chang (DevOps Director)',
-    supervisorEmail: 'mchang@cloudscale.example.com',
-    startDate: '2026-06-08',
-    endDate: '2026-10-31',
-    assignedProfessor: 'Dr. James Smith',
-  },
-];
-
 const STATUS_MAP = {
   placed: { label: 'Placed / Interning', variant: 'success' },
   interviewing: { label: 'Interviewing', variant: 'warning' },
@@ -132,14 +15,14 @@ const STATUS_MAP = {
 export default function ProfessorStudentList() {
   const navigate = useNavigate();
 
-  const [students, setStudents] = useState(DEFAULT_STUDENTS);
+  const [students, setStudents] = useState([]);
   const [stats, setStats] = useState({
-    total: DEFAULT_STUDENTS.length,
-    placed: DEFAULT_STUDENTS.filter((s) => s.status === 'placed').length,
-    interviewing: DEFAULT_STUDENTS.filter((s) => s.status === 'interviewing').length,
-    searching: DEFAULT_STUDENTS.filter((s) => s.status === 'searching').length,
+    total: 0,
+    placed: 0,
+    interviewing: 0,
+    searching: 0,
   });
-  const [pendingReportCount, setPendingReportCount] = useState(3);
+  const [pendingReportCount, setPendingReportCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -149,13 +32,13 @@ export default function ProfessorStudentList() {
     fetch('http://localhost:5000/api/professors/students')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.students && data.students.length > 0) {
+        if (data && Array.isArray(data.students)) {
           setStudents(data.students);
           if (data.stats) setStats(data.stats);
         }
       })
       .catch((err) => {
-        console.warn('Could not connect to backend, using local mock data:', err);
+        console.warn('Could not connect to backend:', err);
       });
 
     fetch('http://localhost:5000/api/professors/reports')

@@ -192,6 +192,20 @@ export default function WeeklyReports() {
     navigate('/login');
   };
 
+  const isPlaced = Boolean(
+    (profile.company && profile.company !== 'Pending Placement') ||
+    (stats.company && stats.company !== 'Pending Placement' && stats.company !== 'Pending Internship Placement')
+  );
+
+  const displayCompany =
+    profile.company && profile.company !== 'Pending Placement'
+      ? profile.company
+      : stats.company && stats.company !== 'Pending Placement' && stats.company !== 'Pending Internship Placement'
+      ? stats.company
+      : 'Pending Internship Placement';
+
+  const displayPosition = profile.position || stats.position || 'Internship Trainee';
+
   return (
     <div className={styles.layout}>
       <Sidebar
@@ -235,23 +249,38 @@ export default function WeeklyReports() {
         <section className={styles.overviewCard}>
           <div className={styles.overviewTop}>
             <div className={styles.placementInfo}>
-              <div className={styles.companyAvatar}>
-                {stats.company ? stats.company.charAt(0) : 'T'}
+              <div
+                className={styles.companyAvatar}
+                style={{
+                  background: isPlaced ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#e2e8f0',
+                  color: isPlaced ? '#ffffff' : '#64748b',
+                }}
+              >
+                {displayCompany.charAt(0)}
               </div>
               <div className={styles.placementMeta}>
-                <div className={styles.companyName}>
-                  {stats.company}
-                  <i className="bi bi-patch-check-fill" style={{ color: '#0d6efd', fontSize: '0.9rem' }} />
+                <div className={styles.companyName} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {displayCompany}
+                  {isPlaced ? (
+                    <span style={{ fontSize: '0.75rem', background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: '999px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <i className="bi bi-patch-check-fill" style={{ color: '#2563eb' }} />
+                      Placed
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', background: '#f1f5f9', color: '#64748b', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>
+                      Waiting for Placement
+                    </span>
+                  )}
                 </div>
                 <div className={styles.roleTag}>
-                  {stats.position} · Semester 1/2026 (4th Year)
+                  {displayPosition} · Semester 1/2026 (4th Year)
                 </div>
               </div>
             </div>
 
             <div className={styles.studentMetaBadge}>
               <i className="bi bi-person-fill" />
-              <span>{profile.nameEn || 'Student'} (ID: {profile.studentCode || '66160138'})</span>
+              <span>{profile.nameEn || 'Student'} {profile.studentCode ? `(ID: ${profile.studentCode})` : ''}</span>
             </div>
           </div>
 

@@ -876,6 +876,72 @@
   gap: 6px;
 }
 
+.fileDropArea {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: var(--radius);
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.fileDropArea:hover {
+  border-color: var(--primary);
+  background: #f0f7ff;
+}
+
+.fileInputHidden {
+  display: none;
+}
+
+.fileDropLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 16px;
+  cursor: pointer;
+  text-align: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.uploadCloudIcon {
+  font-size: 2.2rem;
+  color: var(--primary);
+}
+
+.fileDropText {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.selectedFileInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.selectedFileName {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedFileSize {
+  color: #0284c7;
+  font-size: 0.8rem;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

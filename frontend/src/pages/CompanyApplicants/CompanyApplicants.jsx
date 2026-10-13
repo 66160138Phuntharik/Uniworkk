@@ -6,121 +6,11 @@ import Badge from '../../components/Badge/Badge';
 import { getCompanyNavItems } from '../../utils/companyNav';
 import styles from './CompanyApplicants.module.css';
 
-const DEFAULT_APPLICANTS = [
-  {
-    id: 1,
-    jobId: 1,
-    studentId: 1,
-    studentCode: '65160138',
-    name: 'Alex Johnson',
-    email: 'test001@go.buu.ac.th',
-    phone: '+66 89 123 4567',
-    major: 'Computer Science',
-    faculty: 'Informatics',
-    university: 'Burapha University',
-    year: 'Year 4',
-    gpa: 3.80,
-    position: 'Frontend Developer Intern (React / Next.js)',
-    appliedDate: '2026-05-15',
-    status: 'accepted',
-    resumeAttached: 'Alex_Johnson_Resume_2026.pdf',
-    skills: ['React', 'TypeScript', 'Next.js', 'TailwindCSS', 'Git'],
-    coverNote: 'I am a 4th-year CS student passionate about React, Next.js, and modern UI engineering. I have built several projects using TypeScript and REST APIs, and I am eager to contribute to TechNova Solutions.',
-  },
-  {
-    id: 2,
-    jobId: 1,
-    studentId: 2,
-    studentCode: '65160042',
-    name: 'Maria Chen',
-    email: 'test002@go.buu.ac.th',
-    phone: '+66 81 234 5678',
-    major: 'Software Engineering',
-    faculty: 'Informatics',
-    university: 'Burapha University',
-    year: 'Year 4',
-    gpa: 3.55,
-    position: 'Frontend Developer Intern (React / Next.js)',
-    appliedDate: '2026-05-14',
-    status: 'interviewing',
-    resumeAttached: 'Maria_Chen_Resume_2026.pdf',
-    skills: ['Vue.js', 'React', 'CSS Modules', 'JavaScript', 'HTML5'],
-    coverNote: 'Experienced in building frontend interfaces with Vue and React. Looking forward to expanding my skills in production-grade software development at TechNova.',
-  },
-  {
-    id: 3,
-    jobId: 8,
-    studentId: 3,
-    studentCode: '65160219',
-    name: 'James Park',
-    email: 'test003@go.buu.ac.th',
-    phone: '+66 82 345 6789',
-    major: 'Computer Science',
-    faculty: 'Informatics',
-    university: 'Burapha University',
-    year: 'Year 4',
-    gpa: 3.92,
-    position: 'Full Stack Engineering Intern (Node.js & React)',
-    appliedDate: '2026-05-13',
-    status: 'reviewing',
-    resumeAttached: 'James_Park_SWE_Resume.pdf',
-    skills: ['Node.js', 'Express', 'React', 'PostgreSQL', 'Docker'],
-    coverNote: 'Full-stack enthusiast with strong algorithmic foundations and experience building scalable Express & React applications.',
-  },
-  {
-    id: 4,
-    jobId: 8,
-    studentId: 4,
-    studentCode: '65160085',
-    name: 'Sarah Lin',
-    email: 'test004@go.buu.ac.th',
-    phone: '+66 83 456 7890',
-    major: 'Information Technology',
-    faculty: 'Informatics',
-    university: 'Burapha University',
-    year: 'Year 4',
-    gpa: 3.68,
-    position: 'Full Stack Engineering Intern (Node.js & React)',
-    appliedDate: '2026-05-12',
-    status: 'reviewing',
-    resumeAttached: 'Sarah_Lin_Resume.pdf',
-    skills: ['JavaScript', 'Node.js', 'Express', 'MongoDB', 'REST APIs'],
-    coverNote: 'Proficient in Node.js, Express, and modern JavaScript frameworks. Excited about the full-stack engineering internship opportunity.',
-  },
-  {
-    id: 5,
-    jobId: 9,
-    studentId: 5,
-    studentCode: '65160312',
-    name: 'Kittisak Somboon',
-    email: 'test005@go.buu.ac.th',
-    phone: '+66 84 567 8901',
-    major: 'Digital Media & Software',
-    faculty: 'Informatics',
-    university: 'Burapha University',
-    year: 'Year 4',
-    gpa: 3.74,
-    position: 'UI/UX Product Design Intern',
-    appliedDate: '2026-05-10',
-    status: 'rejected',
-    resumeAttached: 'Kittisak_UIUX_Portfolio.pdf',
-    skills: ['Figma', 'UI Design', 'Wireframing', 'Prototyping', 'Design Systems'],
-    coverNote: 'Deep passion for user experience, design systems, and responsive interactive web interfaces with Figma.',
-  },
-];
-
-const DEFAULT_POSITIONS = [
-  'All Positions',
-  'Frontend Developer Intern (React / Next.js)',
-  'Full Stack Engineering Intern (Node.js & React)',
-  'UI/UX Product Design Intern',
-];
-
 export default function CompanyApplicants() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [applicants, setApplicants] = useState(DEFAULT_APPLICANTS);
+  const [applicants, setApplicants] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'reviewing' | 'interviewing' | 'accepted' | 'rejected'
   const [positionFilter, setPositionFilter] = useState('All Positions');
@@ -132,12 +22,12 @@ export default function CompanyApplicants() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Fetch real data from backend if available
+  // Fetch real data from backend
   useEffect(() => {
     fetch('http://localhost:5000/api/companies/applicants')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.applicants) {
+        if (data && Array.isArray(data.applicants)) {
           setApplicants(data.applicants);
         }
       })
@@ -161,7 +51,7 @@ export default function CompanyApplicants() {
 
   // Available job positions for filtering
   const availablePositions = useMemo(() => {
-    const set = new Set(['All Positions', ...DEFAULT_POSITIONS]);
+    const set = new Set(['All Positions']);
     applicants.forEach((a) => {
       if (a.position) set.add(a.position);
     });
@@ -585,16 +475,31 @@ export default function CompanyApplicants() {
               </div>
 
               <div className={styles.modalFooter}>
-                <a
-                  href={`#download-${previewCandidate.id}`}
-                  className={styles.downloadLink}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    showToast(`Simulated download of ${previewCandidate.resumeAttached}`);
-                  }}
-                >
-                  <i className="bi bi-download" /> Download Original PDF Document
-                </a>
+                {previewCandidate.resumeUrl ? (
+                  <a
+                    href={previewCandidate.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={previewCandidate.resumeAttached || true}
+                    className={styles.downloadLink}
+                    onClick={() => {
+                      showToast(`Opening / Downloading ${previewCandidate.resumeAttached}`);
+                    }}
+                  >
+                    <i className="bi bi-download" /> Download Original Document
+                  </a>
+                ) : (
+                  <a
+                    href={`#download-${previewCandidate.id}`}
+                    className={styles.downloadLink}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      showToast(`Sample document "${previewCandidate.resumeAttached}" (No file uploaded)`);
+                    }}
+                  >
+                    <i className="bi bi-download" /> Download Document
+                  </a>
+                )}
 
                 <button
                   className={styles.previewDocBtn}

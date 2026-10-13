@@ -4,139 +4,6 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Badge from '../../components/Badge/Badge';
 import styles from './FindInternships.module.css';
 
-const DEFAULT_JOBS = [
-  {
-    id: 1,
-    companyId: 2,
-    company: 'TechNova Solutions',
-    category: 'Software & Web',
-    title: 'Frontend Developer Intern (React / Next.js)',
-    location: 'Bangkok',
-    workMode: 'Hybrid',
-    type: 'Full-time Internship',
-    salary: '15,000 THB/month',
-    description: 'Work alongside our product engineering team to build state-of-the-art web applications using React, TypeScript, and modern CSS. You will participate in sprint planning, code reviews, and UI component library development.',
-    requirements: ['Solid understanding of HTML, CSS, JavaScript (ES6+)', 'Hands-on experience with React.js or Vue.js', 'Familiarity with Git version control', 'Good problem-solving and communication skills'],
-    skills: ['React', 'TypeScript', 'CSS3', 'Git', 'REST API'],
-    applicants: 12,
-    status: 'open',
-    postedDate: '2026-05-10',
-  },
-  {
-    id: 2,
-    companyId: 2,
-    company: 'DataRock',
-    category: 'Data & Analytics',
-    title: 'Data Analyst & BI Intern',
-    location: 'Remote',
-    workMode: 'Remote',
-    type: 'Full-time Internship',
-    salary: '14,000 THB/month',
-    description: 'Analyze large-scale business datasets, design interactive Tableau/PowerBI dashboards, and collaborate with product stakeholders to extract actionable insights for data-driven decisions.',
-    requirements: ['Proficiency in SQL queries and data manipulation', 'Familiarity with Python (Pandas, NumPy) or R', 'Experience building visual dashboards in Tableau or PowerBI', 'Curiosity and strong analytical mindset'],
-    skills: ['Python', 'SQL', 'Tableau', 'Excel', 'Data Visualization'],
-    applicants: 8,
-    status: 'open',
-    postedDate: '2026-05-08',
-  },
-  {
-    id: 3,
-    companyId: 3,
-    company: 'CloudScale Tech',
-    category: 'Cloud & DevOps',
-    title: 'Cloud Systems & DevOps Intern',
-    location: 'Bangkok',
-    workMode: 'On-site',
-    type: 'Full-time Internship',
-    salary: '16,000 THB/month',
-    description: 'Help manage CI/CD pipelines, Docker containerized microservices, and AWS cloud infrastructure. You will work closely with senior DevOps engineers on automation, monitoring, and infrastructure-as-code.',
-    requirements: ['Basic knowledge of Linux OS and shell scripting', 'Understanding of Docker containerization concepts', 'Interest in AWS, GCP, or Azure cloud services', 'Eagerness to learn modern DevOps practices'],
-    skills: ['Docker', 'AWS', 'Linux', 'Node.js', 'PostgreSQL'],
-    applicants: 6,
-    status: 'open',
-    postedDate: '2026-05-04',
-  },
-  {
-    id: 4,
-    companyId: 4,
-    company: 'ByteCrafters Studio',
-    category: 'Software & Web',
-    title: 'Backend API Engineer Intern (Node.js / Express)',
-    location: 'Chonburi',
-    workMode: 'Hybrid',
-    type: 'Full-time Internship',
-    salary: '15,000 THB/month',
-    description: 'Design and build high-performance RESTful APIs and database schemas using Node.js, Express, and PostgreSQL. Implement secure authentication, caching, and third-party API integrations.',
-    requirements: ['Experience with Node.js and Express backend development', 'Knowledge of relational databases (PostgreSQL or MySQL)', 'Understanding of REST principles and JWT authentication', 'Unit testing fundamentals'],
-    skills: ['Node.js', 'Express', 'PostgreSQL', 'JWT', 'REST APIs'],
-    applicants: 9,
-    status: 'open',
-    postedDate: '2026-05-06',
-  },
-  {
-    id: 5,
-    companyId: 5,
-    company: 'Siam AI Labs',
-    category: 'Data & Analytics',
-    title: 'AI & Machine Learning Engineering Intern',
-    location: 'Bangkok',
-    workMode: 'Hybrid',
-    type: 'Full-time Internship',
-    salary: '18,000 THB/month',
-    description: 'Work with our AI research team to train, evaluate, and deploy LLM applications, retrieval-augmented generation (RAG) pipelines, and computer vision models.',
-    requirements: ['Strong Python programming skills', 'Understanding of ML/DL algorithms and PyTorch or TensorFlow', 'Familiarity with NLP / LLM concepts is a plus', 'Strong mathematical and problem-solving foundation'],
-    skills: ['Python', 'PyTorch', 'LLMs', 'FastAPI', 'Docker'],
-    applicants: 15,
-    status: 'open',
-    postedDate: '2026-05-02',
-  },
-  {
-    id: 6,
-    companyId: 6,
-    company: 'NextGen Mobile',
-    category: 'Mobile Development',
-    title: 'Mobile App Developer Intern (Flutter / React Native)',
-    location: 'Bangkok',
-    workMode: 'Remote',
-    type: 'Full-time Internship',
-    salary: '15,000 THB/month',
-    description: 'Develop cross-platform mobile apps for iOS and Android. Build smooth, responsive mobile animations, offline-first data caching, and clean user interfaces.',
-    requirements: ['Experience building mobile applications with Flutter (Dart) or React Native', 'Understanding of mobile state management (Provider, Bloc, Redux)', 'Knowledge of REST APIs and JSON data handling', 'Passion for mobile UX'],
-    skills: ['Flutter', 'Dart', 'React Native', 'Mobile UI', 'Git'],
-    applicants: 7,
-    status: 'open',
-    postedDate: '2026-05-07',
-  },
-  {
-    id: 7,
-    companyId: 7,
-    company: 'SecureNet Solutions',
-    category: 'QA & Testing',
-    title: 'Software QA & Test Automation Intern',
-    location: 'Remote',
-    workMode: 'Remote',
-    type: 'Full-time Internship',
-    salary: '13,500 THB/month',
-    description: 'Write automated test scripts using Playwright/Cypress, execute manual test cases, identify software bugs, and ensure seamless delivery of high-quality software releases.',
-    requirements: ['Basic understanding of Software Testing Life Cycle (STLC)', 'Basic JavaScript or Python scripting ability', 'Good attention to detail and analytical thinking', 'Familiarity with Postman for API testing'],
-    skills: ['QA Testing', 'Playwright', 'Postman', 'JavaScript', 'Jira'],
-    applicants: 4,
-    status: 'open',
-    postedDate: '2026-05-09',
-  },
-];
-
-const DEFAULT_APPLICATIONS = [
-  { id: 1, studentId: 1, company: 'TechNova Solutions', position: 'Frontend Developer Intern (React / Next.js)', date: 'May 15, 2026', status: 'accepted' },
-  { id: 2, studentId: 1, company: 'DataRock', position: 'Web Developer (Node.js)', date: 'May 12, 2026', status: 'interviewing' },
-  { id: 3, studentId: 1, company: 'CloudScale Tech', position: 'Cloud Systems & DevOps Intern', date: 'May 10, 2026', status: 'reviewing' },
-];
-
-const DEFAULT_DOCS = [
-  { id: 1, title: 'Alex Johnson - Software Engineer Resume (2026)', fileName: 'Alex_Johnson_Resume_2026.pdf', isPrimary: true, type: 'resume' },
-  { id: 2, title: 'Alex Johnson - Academic & Professional CV', fileName: 'Alex_Johnson_CV_Academic.pdf', isPrimary: false, type: 'cv' },
-];
-
 const STATUS_MAP = {
   accepted: { label: 'Accepted', variant: 'success' },
   interviewing: { label: 'Interview Scheduled', variant: 'warning' },
@@ -166,7 +33,7 @@ export default function FindInternships() {
   const studentId = currentUser?.id || 1;
 
   // Data states
-  const [jobs, setJobs] = useState(DEFAULT_JOBS);
+  const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [activeView, setActiveView] = useState('explore'); // 'explore' | 'applied'
@@ -199,12 +66,12 @@ export default function FindInternships() {
     { iconClass: 'bi-person-badge', label: 'Profile & Resume', onClick: () => navigate('/student/profile') },
   ];
 
-  // Fetch real data if backend server is active
+  // Fetch real data from backend server
   useEffect(() => {
     fetch('http://localhost:5000/api/companies/jobs')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.jobs && data.jobs.length) {
+        if (data && Array.isArray(data.jobs)) {
           setJobs(data.jobs);
         }
       })

@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const { mockReports, mockStudents } = require('../data/mockData');
 
 // GET /api/students/:id/reports ดูรายงานรายสัปดาห์ทั้งหมดของนิสิต
 const getStudentReports = async (req, res) => {
@@ -12,59 +11,60 @@ const getStudentReports = async (req, res) => {
       .eq('id', studentId)
       .maybeSingle();
 
+    const { data: acceptedApp } = await supabase
+      .from('applications')
+      .select('company, position')
+      .eq('student_id', studentId)
+      .eq('status', 'accepted')
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     const { data: reports, error } = await supabase
       .from('reports')
       .select('*')
       .eq('student_id', studentId)
       .order('week', { ascending: false });
 
-    if (!error && reports) {
-      const mapped = reports.map((r) => ({
-        id: r.id,
-        studentId: r.student_id,
-        studentName: r.student_name,
-        studentCode: r.student_code,
-        company: r.company,
-        position: r.position,
-        week: r.week,
-        dateRange: r.date_range,
-        content: r.content,
-        submittedDate: r.submitted_date,
-        status: r.status,
-        feedback: r.feedback || '',
-        feedbackDate: r.feedback_date || null,
-      }));
-
-      const latestWeek = mapped.length ? Math.max(...mapped.map((r) => r.week)) : 0;
-      const stats = {
-        totalWeeksRequired: 16,
-        submittedWeeks: mapped.length,
-        nextDueWeek: latestWeek + 1 <= 16 ? latestWeek + 1 : 16,
-        company: student?.company || mapped[0]?.company || 'Pending Placement',
-        position: student?.position || mapped[0]?.position || 'Intern',
-      };
-
-      return res.json({ reports: mapped, stats });
+    if (error) {
+      console.error('Supabase getStudentReports error:', error.message);
+      return res.status(500).json({ error: error.message });
     }
+
+    const mapped = (reports || []).map((r) => ({
+      id: r.id,
+      studentId: r.student_id,
+      studentName: r.student_name,
+      studentCode: r.student_code,
+      company: r.company,
+      position: r.position,
+      week: r.week,
+      dateRange: r.date_range,
+      content: r.content,
+      submittedDate: r.submitted_date,
+      status: r.status,
+      feedback: r.feedback || '',
+      feedbackDate: r.feedback_date || null,
+    }));
+
+    const placedCompany = student?.company || acceptedApp?.company || mapped[0]?.company || null;
+    const placedPosition = student?.position || acceptedApp?.position || mapped[0]?.position || null;
+
+    const latestWeek = mapped.length ? Math.max(...mapped.map((r) => r.week)) : 0;
+    const stats = {
+      totalWeeksRequired: 16,
+      submittedWeeks: mapped.length,
+      nextDueWeek: latestWeek + 1 <= 16 ? latestWeek + 1 : 16,
+      company: placedCompany || 'Pending Placement',
+      position: placedPosition || 'Intern',
+      isPlaced: Boolean(placedCompany),
+    };
+
+    return res.json({ reports: mapped, stats });
   } catch (err) {
-    console.warn('Supabase getStudentReports fallback:', err.message);
+    console.error('getStudentReports error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-
-  const student = mockStudents.find((s) => s.id === studentId);
-  const reports = mockReports
-    .filter((r) => r.studentId === studentId)
-    .sort((a, b) => b.week - a.week);
-
-  const latestWeek = reports.length ? Math.max(...reports.map((r) => r.week)) : 0;
-  const stats = {
-    totalWeeksRequired: 16,
-    submittedWeeks: reports.length,
-    nextDueWeek: latestWeek + 1 <= 16 ? latestWeek + 1 : 16,
-    company: student?.company || 'Pending Placement',
-    position: student?.position || 'Intern',
-  };
-
-  res.json({ reports, stats });
 };
 
 // POST /api/students/:id/reports ส่งหรือแก้ไขรายงานการฝึกงานประจำสัปดาห์
@@ -85,12 +85,24 @@ const submitReport = async (req, res) => {
       .eq('id', studentId)
       .maybeSingle();
 
+    const { data: acceptedApp } = await supabase
+      .from('applications')
+      .select('company, position')
+      .eq('student_id', studentId)
+      .eq('status', 'accepted')
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const companyFinal = student?.company || acceptedApp?.company || 'Pending Placement';
+    const positionFinal = student?.position || acceptedApp?.position || 'Intern';
+
     const reportData = {
       student_id: studentId,
-      student_name: student?.name || 'Alex Johnson',
-      student_code: student?.student_code || '66160138',
-      company: student?.company || 'TechNova Solutions',
-      position: student?.position || 'Frontend Developer Intern',
+      student_name: student?.name || 'Student',
+      student_code: student?.student_code || '',
+      company: companyFinal,
+      position: positionFinal,
       week: weekNum,
       date_range: dateRange || `Week ${weekNum} Period`,
       content: content.trim(),
@@ -123,54 +135,26 @@ const submitReport = async (req, res) => {
       .select()
       .maybeSingle();
 
-    if (!error && saved) {
-      const formatted = {
-        id: saved.id,
-        studentId: saved.student_id,
-        studentName: saved.student_name,
-        company: saved.company,
-        week: saved.week,
-        dateRange: saved.date_range,
-        content: saved.content,
-        submittedDate: saved.submitted_date,
-        status: saved.status,
-      };
-      return res.status(201).json({ message: `Weekly report for Week ${weekNum} saved to Supabase!`, report: formatted });
+    if (error) {
+      console.error('Supabase submitReport error:', error);
+      return res.status(400).json({ error: error.message });
     }
+
+    const formatted = {
+      id: saved.id,
+      studentId: saved.student_id,
+      studentName: saved.student_name,
+      company: saved.company,
+      week: saved.week,
+      dateRange: saved.date_range,
+      content: saved.content,
+      submittedDate: saved.submitted_date,
+      status: saved.status,
+    };
+    return res.status(201).json({ message: `Weekly report for Week ${weekNum} saved successfully!`, report: formatted });
   } catch (err) {
-    console.warn('Supabase submitReport fallback:', err.message);
-  }
-
-  // Fallback to mock data
-  const student = mockStudents.find((s) => s.id === studentId);
-  let existingIndex = mockReports.findIndex(
-    (r) => r.studentId === studentId && r.week === weekNum
-  );
-
-  const reportData = {
-    id: existingIndex !== -1 ? mockReports[existingIndex].id : Date.now(),
-    studentId,
-    studentName: student?.name || 'Alex Johnson',
-    company: student?.company || 'TechNova Solutions',
-    week: weekNum,
-    dateRange: dateRange || `Week ${weekNum} Period`,
-    content: content.trim(),
-    submittedDate: new Date().toISOString().split('T')[0],
-    status: 'pending',
-  };
-
-  if (existingIndex !== -1) {
-    mockReports[existingIndex] = reportData;
-    res.json({
-      message: `Weekly report for Week ${weekNum} updated successfully.`,
-      report: reportData,
-    });
-  } else {
-    mockReports.unshift(reportData);
-    res.status(201).json({
-      message: `Weekly report for Week ${weekNum} submitted successfully.`,
-      report: reportData,
-    });
+    console.error('submitReport error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 };
 

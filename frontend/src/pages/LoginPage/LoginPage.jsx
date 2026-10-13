@@ -123,21 +123,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.warn('Auth API error:', err.message);
-      // If dev server offline or mock fallback needed
-      if (err.message.includes('fetch') || err.message.includes('Failed to fetch')) {
-        // Dev fallback
-        const mockUser = {
-          id: 1,
-          email: email.trim(),
-          name: name.trim() || 'Alex Johnson',
-          role,
-          major: major || 'Computer Science',
-        };
-        localStorage.setItem('uniwork_user', JSON.stringify(mockUser));
-        navigate(selectedRole.dashboard);
-      } else {
-        setError(err.message || 'Authentication failed. Please try again.');
-      }
+      setError(err.message || 'Authentication failed. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }

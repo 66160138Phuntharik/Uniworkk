@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const uploadMiddleware = require('../middleware/uploadMiddleware');
 const {
   getStudents,
   getStudentById,
@@ -32,7 +33,14 @@ router.put('/:id/profile', verifyToken, updateStudentProfile);
 router.get('/:id/documents', verifyToken, getStudentDocuments);
 
 // POST /api/students/:id/documents
-router.post('/:id/documents', verifyToken, uploadStudentDocument);
+router.post('/:id/documents', verifyToken, (req, res, next) => {
+  uploadMiddleware.single('file')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, uploadStudentDocument);
 
 // DELETE /api/students/:id/documents/:docId
 router.delete('/:id/documents/:docId', verifyToken, deleteStudentDocument);

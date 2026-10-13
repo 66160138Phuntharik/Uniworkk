@@ -4,45 +4,6 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Badge from '../../components/Badge/Badge';
 import styles from './StudentProfile.module.css';
 
-const INITIAL_PROFILE = {
-  studentId: 1,
-  studentCode: '66160138',
-  nameTh: 'ภูริทัต บุญส่ง',
-  nameEn: 'Alex Johnson',
-  faculty: 'Faculty of Informatics',
-  department: 'Computer Science',
-  year: '4th Year',
-  gpa: 3.8,
-  email: 'test001@go.buu.ac.th',
-};
-
-const INITIAL_DOCS = [
-  {
-    id: 1,
-    studentId: 1,
-    title: 'Alex Johnson - Software Engineer Resume (2026)',
-    type: 'resume',
-    fileName: 'Alex_Johnson_Resume_2026.pdf',
-    fileSize: '1.2 MB',
-    fileType: 'application/pdf',
-    uploadDate: '2026-05-10',
-    isPrimary: true,
-    status: 'verified',
-  },
-  {
-    id: 2,
-    studentId: 1,
-    title: 'Alex Johnson - Academic & Professional CV',
-    type: 'cv',
-    fileName: 'Alex_Johnson_CV_Academic.pdf',
-    fileSize: '1.8 MB',
-    fileType: 'application/pdf',
-    uploadDate: '2026-05-02',
-    isPrimary: false,
-    status: 'verified',
-  },
-];
-
 export default function StudentProfile() {
   const navigate = useNavigate();
 
@@ -57,22 +18,19 @@ export default function StudentProfile() {
 
   // State
   const [profile, setProfile] = useState(() => {
-    if (currentUser && currentUser.role === 'student') {
-      return {
-        studentId: currentUser.id,
-        studentCode: currentUser.studentCode || '',
-        nameTh: currentUser.name || '',
-        nameEn: currentUser.name || '',
-        faculty: currentUser.faculty || 'Faculty of Informatics',
-        department: currentUser.major || currentUser.department || 'Computer Science',
-        year: '4th Year',
-        gpa: 3.5,
-        email: currentUser.email || '',
-      };
-    }
-    return INITIAL_PROFILE;
+    return {
+      studentId: currentUser?.id || 1,
+      studentCode: currentUser?.studentCode || '',
+      nameTh: currentUser?.name || '',
+      nameEn: currentUser?.name || '',
+      faculty: currentUser?.faculty || 'Faculty of Informatics',
+      department: currentUser?.major || currentUser?.department || 'Computer Science',
+      year: '4th Year',
+      gpa: 3.5,
+      email: currentUser?.email || '',
+    };
   });
-  const [documents, setDocuments] = useState(studentId === 1 ? INITIAL_DOCS : []);
+  const [documents, setDocuments] = useState([]);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'documents'
   const [docFilter, setDocFilter] = useState('all'); // 'all' | 'resume' | 'cv'
   const [toast, setToast] = useState(null);
@@ -80,13 +38,12 @@ export default function StudentProfile() {
 
   // Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState(null);
 
   // Upload Form state
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadType, setUploadType] = useState('resume'); // 'resume' | 'cv'
-  const [uploadFileName, setUploadFileName] = useState('');
-  const [uploadIsPrimary, setUploadIsPrimary] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Sidebar navigation items
   const navItems = [
@@ -156,59 +113,98 @@ export default function StudentProfile() {
     }
   };
 
-  // Document Vault Handlers
-  const handleUploadSubmit = (e) => {
+  // Handle file selection from disk
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadFile(file);
+      if (!uploadTitle.trim()) {
+        const cleanName = file.name.replace(/\.[^/.]+$/, '');
+        setUploadTitle(cleanName);
+      }
+    }
+  };
+
+  // Real Document Upload Handler
+  const handleUploadSubmit = async (e) => {
     e.preventDefault();
-    if (!uploadTitle.trim() || !uploadFileName.trim()) {
-      showToast('Please provide both document title and file name.', 'info');
+    if (!uploadFile) {
+      showToast('Please select a PDF or Word document file (.pdf, .doc, .docx).', 'danger');
       return;
     }
 
-    let updatedDocs = [...documents];
-    if (uploadIsPrimary) {
-      updatedDocs = updatedDocs.map((doc) => ({ ...doc, isPrimary: false }));
+    setIsUploading(true);
+    const token = localStorage.getItem('uniwork_token');
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    formData.append('title', uploadTitle.trim() || uploadFile.name);
+    formData.append('type', uploadType);
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/students/${studentId}/documents`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload document');
+      }
+
+      showToast(`"${data.document.title}" uploaded to your Document Vault! 📄`, 'success');
+      setShowUploadModal(false);
+      setUploadTitle('');
+      setUploadFile(null);
+
+      // Refresh documents
+      const docsRes = await fetch(`http://localhost:5000/api/students/${studentId}/documents`, {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (docsRes.ok) {
+        const docsData = await docsRes.json();
+        if (docsData && docsData.documents) {
+          setDocuments(docsData.documents);
+        }
+      }
+    } catch (err) {
+      showToast(err.message || 'Upload failed. Please try again.', 'danger');
+    } finally {
+      setIsUploading(false);
     }
-
-    const newDoc = {
-      id: Date.now(),
-      studentId: 1,
-      title: uploadTitle.trim(),
-      type: uploadType,
-      fileName: uploadFileName.trim(),
-      fileSize: '1.4 MB',
-      fileType: uploadFileName.endsWith('.pdf') ? 'application/pdf' : 'application/msword',
-      uploadDate: new Date().toISOString().split('T')[0],
-      isPrimary: uploadIsPrimary,
-      status: 'verified',
-    };
-
-    setDocuments([newDoc, ...updatedDocs]);
-    setShowUploadModal(false);
-    setUploadTitle('');
-    setUploadFileName('');
-    setUploadIsPrimary(false);
-    showToast(`"${newDoc.title}" uploaded to your documents! 📄`);
   };
 
-  const handleSetPrimary = (docId) => {
-    setDocuments((prev) =>
-      prev.map((doc) => ({
-        ...doc,
-        isPrimary: doc.id === docId,
-      }))
-    );
-    showToast('Primary document updated! ⭐');
-  };
 
-  const handleDeleteDocument = (docId, title) => {
+  const handleDeleteDocument = async (docId, title) => {
     if (window.confirm(`Are you sure you want to remove "${title}"?`)) {
-      setDocuments((prev) => prev.filter((d) => d.id !== docId));
-      showToast(`Removed "${title}".`);
+      const token = localStorage.getItem('uniwork_token');
+      try {
+        const res = await fetch(`http://localhost:5000/api/students/${studentId}/documents/${docId}`, {
+          method: 'DELETE',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (res.ok) {
+          setDocuments((prev) => prev.filter((d) => d.id !== docId));
+          showToast(`Removed "${title}".`);
+        } else {
+          throw new Error('Failed to delete document');
+        }
+      } catch (err) {
+        showToast(err.message || 'Failed to delete document', 'danger');
+      }
     }
   };
 
-  const handleSimulatedDownload = (doc) => {
-    showToast(`Downloading "${doc.fileName}"... 📥`, 'info');
+  const handleDownloadDocument = (doc) => {
+    if (doc.fileUrl) {
+      window.open(doc.fileUrl, '_blank');
+    } else {
+      showToast(`Opening "${doc.fileName}"... 📥`, 'info');
+    }
   };
 
   // Filtered documents
@@ -464,7 +460,7 @@ export default function StudentProfile() {
                 {filteredDocs.map((doc) => (
                   <div
                     key={doc.id}
-                    className={`${styles.docCard} ${doc.isPrimary ? styles.docCardPrimary : ''}`}
+                    className={styles.docCard}
                   >
                     <div className={styles.docTop}>
                       <div
@@ -477,11 +473,6 @@ export default function StudentProfile() {
                       <div className={styles.docMeta}>
                         <div className={styles.docTitleRow}>
                           <h4 className={styles.docTitle}>{doc.title}</h4>
-                          {doc.isPrimary && (
-                            <span className={styles.primaryBadge}>
-                              <i className="bi bi-star-fill" /> Primary
-                            </span>
-                          )}
                         </div>
                         <div className={styles.docDetails}>
                           <span>{doc.fileName}</span>
@@ -503,27 +494,11 @@ export default function StudentProfile() {
                       <div className={styles.actionLeft}>
                         <button
                           className={styles.docBtn}
-                          onClick={() => setPreviewDoc(doc)}
-                          title="Preview document"
-                        >
-                          <i className="bi bi-eye" /> Preview
-                        </button>
-                        <button
-                          className={styles.docBtn}
-                          onClick={() => handleSimulatedDownload(doc)}
-                          title="Download file"
+                          onClick={() => handleDownloadDocument(doc)}
+                          title="Download / View file"
                         >
                           <i className="bi bi-download" /> Download
                         </button>
-                        {!doc.isPrimary && (
-                          <button
-                            className={`${styles.docBtn} ${styles.docBtnPrimaryStar}`}
-                            onClick={() => handleSetPrimary(doc.id)}
-                            title="Set as primary document for applications"
-                          >
-                            <i className="bi bi-star" /> Set Primary
-                          </button>
-                        )}
                       </div>
                       <button
                         className={`${styles.docBtn} ${styles.docBtnDelete}`}
@@ -598,108 +573,55 @@ export default function StudentProfile() {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>File Name / Attachment</label>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="e.g. Alex_Johnson_Resume.pdf"
-                      value={uploadFileName}
-                      onChange={(e) => setUploadFileName(e.target.value)}
-                      required
-                    />
-                    <span className={styles.helpText}>Supported formats: .pdf, .docx</span>
+                    <label className={styles.label}>Select Document File (.pdf, .docx, .doc)</label>
+                    <div className={styles.fileDropArea}>
+                      <input
+                        type="file"
+                        id="documentFileInput"
+                        accept=".pdf,.doc,.docx"
+                        className={styles.fileInputHidden}
+                        onChange={handleFileChange}
+                      />
+                      <label htmlFor="documentFileInput" className={styles.fileDropLabel}>
+                        <i className={`bi bi-cloud-arrow-up ${styles.uploadCloudIcon}`} />
+                        {uploadFile ? (
+                          <div className={styles.selectedFileInfo}>
+                            <i className="bi bi-file-earmark-check" />
+                            <span className={styles.selectedFileName}>{uploadFile.name}</span>
+                            <span className={styles.selectedFileSize}>
+                              ({(uploadFile.size / (1024 * 1024) >= 1)
+                                ? `${(uploadFile.size / (1024 * 1024)).toFixed(1)} MB`
+                                : `${Math.round(uploadFile.size / 1024)} KB`})
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={styles.fileDropText}>Click to select file from your computer</span>
+                            <span className={styles.helpText}>Supports PDF, DOC, DOCX up to 10MB</span>
+                          </>
+                        )}
+                      </label>
+                    </div>
                   </div>
 
-                  <div className={styles.checkboxRow}>
-                    <input
-                      type="checkbox"
-                      id="primaryCheckbox"
-                      checked={uploadIsPrimary}
-                      onChange={(e) => setUploadIsPrimary(e.target.checked)}
-                      className={styles.checkbox}
-                    />
-                    <label htmlFor="primaryCheckbox" className={styles.checkboxLabel}>
-                      Set as Primary document for 1-click internship applications
-                    </label>
-                  </div>
                 </div>
 
                 <div className={styles.modalFooter}>
                   <button
                     type="button"
                     className={styles.backBtn}
-                    onClick={() => setShowUploadModal(false)}
+                    onClick={() => {
+                      setShowUploadModal(false);
+                      setUploadFile(null);
+                    }}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className={styles.saveBtn}>
-                    <i className="bi bi-cloud-arrow-up" /> Upload
+                  <button type="submit" className={styles.saveBtn} disabled={isUploading}>
+                    <i className="bi bi-cloud-arrow-up" /> {isUploading ? 'Uploading…' : 'Upload Document'}
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        )}
-
-        {/* ── MODAL 2: Document Preview ──────────────────── */}
-        {previewDoc && (
-          <div className={styles.modalBackdrop} onClick={() => setPreviewDoc(null)}>
-            <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h3 className={styles.modalTitle}>Document Preview</h3>
-                <button className={styles.modalCloseBtn} onClick={() => setPreviewDoc(null)}>×</button>
-              </div>
-
-              <div className={styles.modalBody}>
-                <div className={styles.previewViewer}>
-                  <div className={styles.previewIconWrap}>
-                    <i className={previewDoc.type === 'cv' ? 'bi bi-file-earmark-text' : 'bi bi-file-earmark-pdf'} />
-                  </div>
-                  <div className={styles.previewTitle}>
-                    {previewDoc.title}
-                  </div>
-                  <div className={styles.previewSubtitle}>
-                    {previewDoc.fileName} • {previewDoc.fileSize}
-                  </div>
-                  <div className={styles.previewNotice}>
-                    <i className="bi bi-shield-check" /> Verified document ready for internship applications.
-                  </div>
-                </div>
-
-                <div className={styles.formGrid}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Uploaded Date</label>
-                    <input type="text" className={`${styles.input} ${styles.inputReadonly}`} value={previewDoc.uploadDate} disabled />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Document Type</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${styles.inputReadonly}`}
-                      value={previewDoc.type === 'cv' ? 'Curriculum Vitae (CV)' : 'Resume'}
-                      disabled
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.modalFooter}>
-                <button
-                  className={styles.backBtn}
-                  onClick={() => setPreviewDoc(null)}
-                >
-                  Close
-                </button>
-                <button
-                  className={styles.saveBtn}
-                  onClick={() => {
-                    handleSimulatedDownload(previewDoc);
-                    setPreviewDoc(null);
-                  }}
-                >
-                  <i className="bi bi-download" /> Download File
-                </button>
-              </div>
             </div>
           </div>
         )}

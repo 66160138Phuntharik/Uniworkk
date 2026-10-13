@@ -4,25 +4,30 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import { getCompanyNavItems } from '../../utils/companyNav';
 import styles from './CompanyProfile.module.css';
 
-const DEFAULT_PROFILE = {
-  companyName: 'TechNova Solutions',
-  tagline: 'Leading Cloud-Native & Enterprise AI Solutions',
-  industry: 'Technology & Software Development',
-  foundedYear: '2018',
-  companySize: '150 - 300 Employees',
-  website: 'https://technova.example.com',
-  contactEmail: 'careers@technova.example.com',
-  contactPhone: '+66 2 456 7890',
-  location: 'Bangkok, Thailand',
-  address: '88/1 Cyber World Tower, 24th Fl, Ratchadapisek Rd, Huai Khwang, Bangkok 10310',
-  description:
-    'TechNova Solutions is a forward-thinking software consultancy and enterprise cloud engineering firm. We partner with leading universities to mentor talented engineering interns, offering hands-on experience in modern web platforms, distributed systems, and real-world software architecture.',
-};
-
 export default function CompanyProfile() {
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
+  const [profile, setProfile] = useState({
+    companyName: currentUser?.name || '',
+    tagline: '',
+    industry: '',
+    foundedYear: '',
+    companySize: '',
+    website: '',
+    contactEmail: currentUser?.email || '',
+    contactPhone: '',
+    location: '',
+    address: '',
+    description: '',
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -33,7 +38,8 @@ export default function CompanyProfile() {
 
   // Fetch company profile on mount
   useEffect(() => {
-    fetch('http://localhost:5000/api/companies/profile')
+    const q = currentUser?.name ? `?company=${encodeURIComponent(currentUser.name)}` : '';
+    fetch(`http://localhost:5000/api/companies/profile${q}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile) {
@@ -41,7 +47,7 @@ export default function CompanyProfile() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [currentUser?.name]);
 
   const handleChange = (field, value) => {
     setProfile((prev) => ({ ...prev, [field]: value }));

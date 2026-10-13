@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const { mockApplicants } = require('../data/mockData');
 
 // GET /api/companies/applicants or /api/companies/:id/applicants
 const getApplicants = async (req, res) => {
@@ -21,15 +20,42 @@ const getApplicants = async (req, res) => {
 
     const { data: dbApps, error } = await query;
 
-    if (!error && dbApps) {
-      let mapped = dbApps.map((a) => ({
+    if (error) {
+      console.error('Supabase getApplicants error:', error.message);
+      return res.status(500).json({ error: error.message });
+    }
+
+    const studentIds = [...new Set((dbApps || []).map((a) => a.student_id).filter(Boolean))];
+    let docMap = {};
+    if (studentIds.length > 0) {
+      try {
+        const { data: docs } = await supabase
+          .from('documents')
+          .select('student_id, file_name, file_url, is_primary')
+          .in('student_id', studentIds);
+        (docs || []).forEach((d) => {
+          if (!docMap[d.student_id] || d.is_primary) {
+            docMap[d.student_id] = d;
+          }
+          if (d.file_name) {
+            docMap[`${d.student_id}_${d.file_name}`] = d;
+          }
+        });
+      } catch (docErr) {
+        console.warn('Could not fetch applicant documents:', docErr.message);
+      }
+    }
+
+    let mapped = (dbApps || []).map((a) => {
+      const matchedDoc = docMap[`${a.student_id}_${a.resume_attached}`] || docMap[a.student_id];
+      return {
         id: a.id,
         jobId: a.job_id,
         studentId: a.student_id,
         name: a.students?.name || 'Applicant',
-        studentCode: a.students?.student_code || '66160138',
-        email: a.students?.email || 'applicant@buu.ac.th',
-        phone: a.students?.phone || '+66 89 123 4567',
+        studentCode: a.students?.student_code || '',
+        email: a.students?.email || '',
+        phone: a.students?.phone || '',
         faculty: a.students?.faculty || 'Informatics',
         major: a.students?.major || 'Computer Science',
         university: 'Burapha University',
@@ -39,47 +65,29 @@ const getApplicants = async (req, res) => {
         position: a.position,
         appliedDate: a.date,
         status: a.status,
-        resumeAttached: a.resume_attached || 'Resume.pdf',
+        resumeAttached: a.resume_attached || matchedDoc?.file_name || 'Resume.pdf',
+        resumeUrl: matchedDoc?.file_url || null,
         coverNote: a.cover_note || '',
-      }));
+      };
+    });
 
-      if (search) {
-        const q = search.toLowerCase();
-        mapped = mapped.filter(
-          (a) =>
-            a.name.toLowerCase().includes(q) ||
-            (a.major && a.major.toLowerCase().includes(q)) ||
-            (a.position && a.position.toLowerCase().includes(q)) ||
-            (a.studentCode && a.studentCode.includes(q)) ||
-            (a.company && a.company.toLowerCase().includes(q))
-        );
-      }
-
-      return res.json({ applicants: mapped, total: mapped.length });
+    if (search) {
+      const q = search.toLowerCase();
+      mapped = mapped.filter(
+        (a) =>
+          a.name.toLowerCase().includes(q) ||
+          (a.major && a.major.toLowerCase().includes(q)) ||
+          (a.position && a.position.toLowerCase().includes(q)) ||
+          (a.studentCode && a.studentCode.includes(q)) ||
+          (a.company && a.company.toLowerCase().includes(q))
+      );
     }
-  } catch (err) {
-    console.warn('Supabase getApplicants fallback:', err.message);
-  }
 
-  // Fallback to mock data
-  let applicants = [...mockApplicants];
-  if (targetJobId) {
-    applicants = applicants.filter((a) => a.jobId === parseInt(targetJobId));
+    return res.json({ applicants: mapped, total: mapped.length });
+  } catch (err) {
+    console.error('getApplicants error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-  if (status && status !== 'all') {
-    applicants = applicants.filter((a) => a.status === status);
-  }
-  if (search) {
-    const q = search.toLowerCase();
-    applicants = applicants.filter(
-      (a) =>
-        a.name.toLowerCase().includes(q) ||
-        (a.major && a.major.toLowerCase().includes(q)) ||
-        (a.position && a.position.toLowerCase().includes(q)) ||
-        (a.studentCode && a.studentCode.includes(q))
-    );
-  }
-  res.json({ applicants, total: applicants.length });
 };
 
 // PATCH /api/companies/applicants/:applicantId/status
@@ -102,17 +110,51 @@ const updateApplicantStatus = async (req, res) => {
       .select()
       .maybeSingle();
 
-    if (!error && updated) {
-      return res.json({ message: 'Applicant status updated in Supabase.', applicant: updated });
+    if (error) {
+      console.error('Supabase updateApplicantStatus error:', error.message);
+      return res.status(500).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase updateApplicantStatus fallback:', err.message);
-  }
 
-  const applicant = mockApplicants.find((a) => a.id === applicantId);
-  if (!applicant) return res.status(404).json({ error: 'Applicant not found.' });
-  applicant.status = status;
-  res.json({ message: 'Applicant status updated.', applicant });
+    if (!updated) {
+      return res.status(404).json({ error: 'Applicant not found.' });
+    }
+
+    if (status === 'accepted' && updated.student_id) {
+      await supabase
+        .from('students')
+        .update({
+          company: updated.company,
+          position: updated.position,
+          status: 'placed',
+        })
+        .eq('id', updated.student_id);
+    } else if (status !== 'accepted' && updated.student_id) {
+      // If changed away from accepted, check if student has any other accepted application
+      const { data: otherAccepted } = await supabase
+        .from('applications')
+        .select('company, position')
+        .eq('student_id', updated.student_id)
+        .eq('status', 'accepted')
+        .neq('id', updated.id)
+        .maybeSingle();
+
+      if (!otherAccepted) {
+        await supabase
+          .from('students')
+          .update({
+            company: null,
+            position: null,
+            status: 'searching',
+          })
+          .eq('id', updated.student_id);
+      }
+    }
+
+    return res.json({ message: 'Applicant status updated successfully.', applicant: updated });
+  } catch (err) {
+    console.error('updateApplicantStatus error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
 };
 
 module.exports = {

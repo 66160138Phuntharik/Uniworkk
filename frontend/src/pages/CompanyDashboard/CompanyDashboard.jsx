@@ -6,18 +6,6 @@ import Badge from '../../components/Badge/Badge';
 import { getCompanyNavItems } from '../../utils/companyNav';
 import styles from './CompanyDashboard.module.css';
 
-const DEFAULT_JOBS = [
-  { title: 'Frontend Developer Intern (React / Next.js)', type: 'Full-time', location: 'Bangkok', applicants: 12, status: 'open' },
-  { title: 'Full Stack Engineering Intern (Node.js & React)', type: 'Full-time', location: 'Bangkok', applicants: 8, status: 'open' },
-  { title: 'UI/UX Product Design Intern', type: 'Full-time', location: 'Bangkok', applicants: 5, status: 'closed' },
-];
-
-const DEFAULT_APPLICANTS = [
-  { name: 'Alex Johnson', major: 'Computer Science', position: 'Frontend Developer Intern', gpa: '3.8', status: 'accepted' },
-  { name: 'Maria Chen', major: 'Software Engineering', position: 'Frontend Developer Intern', gpa: '3.5', status: 'interviewing' },
-  { name: 'James Park', major: 'Computer Science', position: 'Full Stack Engineering Intern', gpa: '3.9', status: 'reviewing' },
-];
-
 const JOB_STATUS = {
   open: { label: 'Open', variant: 'success' },
   closed: { label: 'Closed', variant: 'secondary' },
@@ -41,9 +29,9 @@ export default function CompanyDashboard() {
     }
   })();
 
-  const [companyName, setCompanyName] = useState(currentUser?.name || 'TechNova Solutions');
-  const [jobs, setJobs] = useState(DEFAULT_JOBS);
-  const [applicants, setApplicants] = useState(DEFAULT_APPLICANTS);
+  const [companyName, setCompanyName] = useState(currentUser?.name || 'Company Workspace');
+  const [jobs, setJobs] = useState([]);
+  const [applicants, setApplicants] = useState([]);
 
   useEffect(() => {
     // Fetch company profile for title
@@ -60,7 +48,7 @@ export default function CompanyDashboard() {
     fetch('http://localhost:5000/api/companies/jobs')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.jobs && data.jobs.length > 0) {
+        if (data && Array.isArray(data.jobs)) {
           setJobs(data.jobs);
         }
       })
@@ -70,7 +58,7 @@ export default function CompanyDashboard() {
     fetch('http://localhost:5000/api/companies/applicants')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.applicants) {
+        if (data && Array.isArray(data.applicants)) {
           setApplicants(data.applicants);
         }
       })
@@ -154,25 +142,33 @@ export default function CompanyDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {jobs.slice(0, 3).map((job, i) => (
-                    <tr
-                      key={i}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate('/company/jobs')}
-                    >
-                      <td className={styles.tdTitle}>{job.title}</td>
-                      <td className={styles.tdType}>{job.type}</td>
-                      <td>{job.location}</td>
-                      <td className={styles.tdCount}>
-                        <span className={styles.countBubble}>{job.applicants || 0}</span>
-                      </td>
-                      <td>
-                        <Badge variant={JOB_STATUS[job.status]?.variant || 'secondary'}>
-                          {JOB_STATUS[job.status]?.label || job.status}
-                        </Badge>
+                  {jobs.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8' }}>
+                        No job listings posted yet
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    jobs.slice(0, 3).map((job, i) => (
+                      <tr
+                        key={i}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate('/company/jobs')}
+                      >
+                        <td className={styles.tdTitle}>{job.title}</td>
+                        <td className={styles.tdType}>{job.type}</td>
+                        <td>{job.location}</td>
+                        <td className={styles.tdCount}>
+                          <span className={styles.countBubble}>{job.applicants || 0}</span>
+                        </td>
+                        <td>
+                          <Badge variant={JOB_STATUS[job.status]?.variant || 'secondary'}>
+                            {JOB_STATUS[job.status]?.label || job.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -192,28 +188,34 @@ export default function CompanyDashboard() {
           <div className={styles.card}>
             <h2 className={styles.cardTitle}>Recent Applicants</h2>
             <div className={styles.applicantList}>
-              {applicants.slice(0, 3).map((a, i) => (
-                <div
-                  key={i}
-                  className={styles.applicantRow}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => navigate('/company/applicants')}
-                >
-                  <div className={styles.applicantAvatar}>
-                    {a.name.charAt(0)}
-                  </div>
-                  <div className={styles.applicantInfo}>
-                    <div className={styles.applicantName}>{a.name}</div>
-                    <div className={styles.applicantMeta}>
-                      {a.major} · GPA {a.gpa}
+              {applicants.length === 0 ? (
+                <p style={{ color: '#94a3b8', padding: '1.5rem 0', textAlign: 'center', fontSize: '0.9rem' }}>
+                  No applicant applications received yet
+                </p>
+              ) : (
+                applicants.slice(0, 3).map((a, i) => (
+                  <div
+                    key={i}
+                    className={styles.applicantRow}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate('/company/applicants')}
+                  >
+                    <div className={styles.applicantAvatar}>
+                      {a.name.charAt(0)}
                     </div>
-                    <div className={styles.applicantPos}>{a.position}</div>
+                    <div className={styles.applicantInfo}>
+                      <div className={styles.applicantName}>{a.name}</div>
+                      <div className={styles.applicantMeta}>
+                        {a.major} · GPA {a.gpa}
+                      </div>
+                      <div className={styles.applicantPos}>{a.position}</div>
+                    </div>
+                    <Badge variant={APP_STATUS[a.status]?.variant || 'secondary'}>
+                      {APP_STATUS[a.status]?.label || a.status}
+                    </Badge>
                   </div>
-                  <Badge variant={APP_STATUS[a.status]?.variant || 'secondary'}>
-                    {APP_STATUS[a.status]?.label || a.status}
-                  </Badge>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <a
               href="#"

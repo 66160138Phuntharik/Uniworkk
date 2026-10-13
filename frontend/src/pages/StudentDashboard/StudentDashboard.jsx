@@ -88,6 +88,40 @@ export default function StudentDashboard() {
     { iconClass: 'bi-person-badge', label: 'Profile & Resume', onClick: () => navigate('/student/profile') },
   ];
 
+  // Calculate days remaining until Sunday cut-off
+  const getSundayCutoffInfo = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday ... 6 is Saturday
+    const daysLeft = (7 - dayOfWeek) % 7;
+
+    if (daysLeft === 0) {
+      return {
+        days: 0,
+        text: 'ตัดรอบวันนี้! (ก่อน 23:59 น.)',
+        badgeClass: styles.cutoffUrgent,
+        icon: 'bi-exclamation-triangle-fill',
+      };
+    } else if (daysLeft === 1) {
+      return {
+        days: 1,
+        text: 'เหลืออีก 1 วัน (ตัดรอบวันอาทิตย์นี้)',
+        badgeClass: styles.cutoffWarning,
+        icon: 'bi-alarm-fill',
+      };
+    } else {
+      return {
+        days: daysLeft,
+        text: `เหลืออีก ${daysLeft} วัน (ตัดรอบวันอาทิตย์)`,
+        badgeClass: styles.cutoffNormal,
+        icon: 'bi-calendar-check-fill',
+      };
+    }
+  };
+
+  const cutoffInfo = getSundayCutoffInfo();
+  const nextReportWeek = reportsCount + 1 <= 16 ? reportsCount + 1 : 16;
+  const progressPercent = Math.min(100, Math.round((reportsCount / 16) * 100));
+
   return (
     <div className={styles.layout}>
       <Sidebar
@@ -134,7 +168,52 @@ export default function StudentDashboard() {
         <div className={styles.statsRow}>
           <StatCard label="Applications Sent" value={String(applications.length)} unit="companies" />
           <StatCard label="Interviews Scheduled" value={String(interviewsCount)} unit="companies" accent={interviewsCount > 0 ? 'warning' : ''} />
-          <StatCard label="Reports Submitted" value={`${reportsCount} / 16`} unit="weeks" accent="success" />
+          
+          {/* Enhanced Reports Submitted with Sunday Cut-off Reminder */}
+          <div className={styles.reportCardStat}>
+            <div>
+              <div className={styles.reportCardStatHeader}>
+                <span className={styles.reportStatLabel}>Reports Submitted</span>
+                {reportsCount < 16 && (
+                  <button
+                    type="button"
+                    className={styles.writeReportBtn}
+                    onClick={() => navigate('/student/reports?new=true')}
+                    title="Write next weekly report"
+                  >
+                    <i className="bi bi-pencil-square" />
+                    Write Week {nextReportWeek}
+                  </button>
+                )}
+              </div>
+
+              <div className={styles.reportStatValue}>
+                <span>{reportsCount} / 16</span>
+                <span className={styles.reportStatUnit}>weeks ({progressPercent}%)</span>
+              </div>
+
+              <div className={styles.reportProgressBarBg}>
+                <div
+                  className={styles.reportProgressBarFill}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Reminder & Sunday cut-off countdown */}
+            <div className={styles.reportReminderBox}>
+              <div className={styles.reportReminderLeft}>
+                <i className="bi bi-clock-history" style={{ color: 'var(--primary)', fontSize: '0.9rem' }} />
+                <span>
+                  Next due: <span className={styles.reportReminderWeek}>Week {nextReportWeek}</span>
+                </span>
+              </div>
+              <span className={`${styles.reportCutoffBadge} ${cutoffInfo.badgeClass}`}>
+                <i className={`bi ${cutoffInfo.icon}`} />
+                {cutoffInfo.text}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* ── Content Grid ────────────────────────────────── */}
@@ -205,33 +284,6 @@ export default function StudentDashboard() {
                 </button>
               </>
             )}
-          </div>
-
-          {/* To-Do List */}
-          <div className={`${styles.card} ${styles.cardAccented}`}>
-            <h2 className={styles.cardTitle}>
-              <i className="bi bi-card-checklist" /> To-Do List
-            </h2>
-
-            <div className={styles.todoItem}>
-              <div className={styles.todoBody}>
-                <div className={styles.todoTitle}>Submit Weekly Report – Week {reportsCount + 1}</div>
-                <div className={styles.todoSub}>Next due internship submission</div>
-              </div>
-              <button className={styles.todoBtnYellow} onClick={() => navigate('/student/reports?new=true')}>
-                Write Report
-              </button>
-            </div>
-
-            <div className={`${styles.todoItem} ${styles.todoItemGray}`}>
-              <div className={styles.todoBody}>
-                <div className={styles.todoTitle}>Update Skills & Documents</div>
-                <div className={styles.todoSub}>Keep your latest Resume up to date for advisors</div>
-              </div>
-              <button className={styles.todoBtnGhost} onClick={() => navigate('/student/profile')}>
-                Go to Profile
-              </button>
-            </div>
           </div>
         </div>
       </main>

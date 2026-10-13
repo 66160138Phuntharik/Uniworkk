@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const { mockJobs } = require('../data/mockData');
 
 // GET /api/companies/jobs
 const getJobs = async (req, res) => {
@@ -14,58 +13,45 @@ const getJobs = async (req, res) => {
 
     const { data: dbJobs, error } = await query;
 
-    if (!error && dbJobs && dbJobs.length > 0) {
-      let mapped = dbJobs.map((j) => ({
-        id: j.id,
-        companyId: j.company_id,
-        company: j.company,
-        category: j.category,
-        title: j.title,
-        description: j.description,
-        requirements: j.requirements || [],
-        skills: j.skills || [],
-        location: j.location,
-        workMode: j.work_mode,
-        salary: j.salary,
-        type: j.type,
-        applicants: j.applicants || 0,
-        status: j.status,
-        postedDate: j.posted_date,
-      }));
-
-      if (search) {
-        const q = search.toLowerCase();
-        mapped = mapped.filter(
-          (j) =>
-            j.title.toLowerCase().includes(q) ||
-            (j.category && j.category.toLowerCase().includes(q)) ||
-            (j.skills && j.skills.some((s) => s.toLowerCase().includes(q))) ||
-            (j.description && j.description.toLowerCase().includes(q))
-        );
-      }
-
-      return res.json({ jobs: mapped, total: mapped.length });
+    if (error) {
+      console.error('Supabase getJobs error:', error.message);
+      return res.status(500).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase getJobs fallback:', err.message);
-  }
 
-  // Fallback to mock data
-  let jobs = [...mockJobs];
-  if (companyId) jobs = jobs.filter((j) => j.companyId === parseInt(companyId));
-  if (status) jobs = jobs.filter((j) => j.status === status);
-  if (location) jobs = jobs.filter((j) => j.location.toLowerCase().includes(location.toLowerCase()));
-  if (search) {
-    const q = search.toLowerCase();
-    jobs = jobs.filter(
-      (j) =>
-        j.title.toLowerCase().includes(q) ||
-        (j.category && j.category.toLowerCase().includes(q)) ||
-        (j.skills && j.skills.some((s) => s.toLowerCase().includes(q))) ||
-        (j.description && j.description.toLowerCase().includes(q))
-    );
+    let mapped = (dbJobs || []).map((j) => ({
+      id: j.id,
+      companyId: j.company_id,
+      company: j.company,
+      category: j.category,
+      title: j.title,
+      description: j.description,
+      requirements: j.requirements || [],
+      skills: j.skills || [],
+      location: j.location,
+      workMode: j.work_mode,
+      salary: j.salary,
+      type: j.type,
+      applicants: j.applicants || 0,
+      status: j.status,
+      postedDate: j.posted_date,
+    }));
+
+    if (search) {
+      const q = search.toLowerCase();
+      mapped = mapped.filter(
+        (j) =>
+          j.title.toLowerCase().includes(q) ||
+          (j.category && j.category.toLowerCase().includes(q)) ||
+          (j.skills && j.skills.some((s) => s.toLowerCase().includes(q))) ||
+          (j.description && j.description.toLowerCase().includes(q))
+      );
+    }
+
+    return res.json({ jobs: mapped, total: mapped.length });
+  } catch (err) {
+    console.error('getJobs error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-  res.json({ jobs, total: jobs.length });
 };
 
 // GET /api/companies/jobs/:id
@@ -79,32 +65,35 @@ const getJobById = async (req, res) => {
       .eq('id', jobId)
       .maybeSingle();
 
-    if (!error && j) {
-      return res.json({
-        id: j.id,
-        companyId: j.company_id,
-        company: j.company,
-        category: j.category,
-        title: j.title,
-        description: j.description,
-        requirements: j.requirements || [],
-        skills: j.skills || [],
-        location: j.location,
-        workMode: j.work_mode,
-        salary: j.salary,
-        type: j.type,
-        applicants: j.applicants || 0,
-        status: j.status,
-        postedDate: j.posted_date,
-      });
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase getJobById fallback:', err.message);
-  }
 
-  const job = mockJobs.find((j) => j.id === jobId);
-  if (!job) return res.status(404).json({ error: 'Job not found.' });
-  res.json(job);
+    if (!j) {
+      return res.status(404).json({ error: 'Job not found.' });
+    }
+
+    return res.json({
+      id: j.id,
+      companyId: j.company_id,
+      company: j.company,
+      category: j.category,
+      title: j.title,
+      description: j.description,
+      requirements: j.requirements || [],
+      skills: j.skills || [],
+      location: j.location,
+      workMode: j.work_mode,
+      salary: j.salary,
+      type: j.type,
+      applicants: j.applicants || 0,
+      status: j.status,
+      postedDate: j.posted_date,
+    });
+  } catch (err) {
+    console.error('getJobById error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
 };
 
 // POST /api/companies/jobs
@@ -119,6 +108,8 @@ const createJob = async (req, res) => {
     workMode,
     salary,
     type,
+    companyId,
+    company: customCompany,
   } = req.body;
 
   if (!title || !description) {
@@ -139,7 +130,7 @@ const createJob = async (req, res) => {
     parsedSkills = [];
   }
 
-  const company = req.user?.name || 'TechNova Solutions';
+  const company = customCompany || req.user?.name || 'Company';
 
   try {
     const { data: maxJ } = await supabase
@@ -154,7 +145,7 @@ const createJob = async (req, res) => {
       .from('jobs')
       .insert({
         id: nextId,
-        company_id: req.body.companyId ? parseInt(req.body.companyId) : 1,
+        company_id: companyId ? parseInt(companyId) : (req.user?.id || 1),
         company,
         category: category || 'Software & Web',
         title,
@@ -172,52 +163,35 @@ const createJob = async (req, res) => {
       .select()
       .maybeSingle();
 
-    if (!error && newJob) {
-      return res.status(201).json({
-        message: 'Job posted to Supabase successfully.',
-        job: {
-          id: newJob.id,
-          companyId: newJob.company_id,
-          company: newJob.company,
-          title: newJob.title,
-          category: newJob.category,
-          description: newJob.description,
-          requirements: newJob.requirements,
-          skills: newJob.skills,
-          location: newJob.location,
-          workMode: newJob.work_mode,
-          salary: newJob.salary,
-          type: newJob.type,
-          status: newJob.status,
-          postedDate: newJob.posted_date,
-        },
-      });
+    if (error) {
+      console.error('Supabase createJob error:', error);
+      return res.status(400).json({ error: error.message });
     }
+
+    return res.status(201).json({
+      message: 'Job listing posted successfully.',
+      job: {
+        id: newJob.id,
+        companyId: newJob.company_id,
+        company: newJob.company,
+        title: newJob.title,
+        category: newJob.category,
+        description: newJob.description,
+        requirements: newJob.requirements,
+        skills: newJob.skills,
+        location: newJob.location,
+        workMode: newJob.work_mode,
+        salary: newJob.salary,
+        type: newJob.type,
+        applicants: newJob.applicants || 0,
+        status: newJob.status,
+        postedDate: newJob.posted_date,
+      },
+    });
   } catch (err) {
-    console.warn('Supabase createJob fallback:', err.message);
+    console.error('createJob error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-
-  // Fallback
-  const fallbackJob = {
-    id: mockJobs.length > 0 ? Math.max(...mockJobs.map((j) => j.id)) + 1 : 1,
-    companyId: req.user?.id || 2,
-    company,
-    category: category || 'Software & Web',
-    title,
-    description,
-    requirements: parsedReqs,
-    skills: parsedSkills,
-    location: location || 'Bangkok',
-    workMode: workMode || 'Hybrid',
-    salary: salary || '15,000 THB/month',
-    type: type || 'Full-time Internship',
-    applicants: 0,
-    status: 'open',
-    postedDate: new Date().toISOString().split('T')[0],
-  };
-
-  mockJobs.unshift(fallbackJob);
-  res.status(201).json({ message: 'Job posted successfully.', job: fallbackJob });
 };
 
 // DELETE /api/companies/jobs/:id
@@ -232,19 +206,19 @@ const deleteJob = async (req, res) => {
       .select()
       .maybeSingle();
 
-    if (!error && data) {
-      return res.json({ message: 'Job listing deleted from Supabase successfully.', job: data });
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase deleteJob fallback:', err.message);
-  }
 
-  const index = mockJobs.findIndex((j) => j.id === jobId);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Job listing not found.' });
+    if (!data) {
+      return res.status(404).json({ error: 'Job listing not found.' });
+    }
+
+    return res.json({ message: 'Job listing deleted successfully.', job: data });
+  } catch (err) {
+    console.error('deleteJob error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-  const deleted = mockJobs.splice(index, 1)[0];
-  res.json({ message: 'Job listing deleted successfully.', job: deleted });
 };
 
 // PATCH /api/companies/jobs/:id/status
@@ -252,7 +226,18 @@ const toggleJobStatus = async (req, res) => {
   const jobId = parseInt(req.params.id);
 
   try {
-    const nextStatus = req.body.status || 'closed';
+    // Check existing
+    const { data: existing, error: findErr } = await supabase
+      .from('jobs')
+      .select('status')
+      .eq('id', jobId)
+      .maybeSingle();
+
+    if (findErr) return res.status(500).json({ error: findErr.message });
+    if (!existing) return res.status(404).json({ error: 'Job listing not found.' });
+
+    const nextStatus = req.body.status || (existing.status === 'open' ? 'closed' : 'open');
+
     const { data, error } = await supabase
       .from('jobs')
       .update({ status: nextStatus })
@@ -260,19 +245,15 @@ const toggleJobStatus = async (req, res) => {
       .select()
       .maybeSingle();
 
-    if (!error && data) {
-      return res.json({ message: 'Job status updated in Supabase.', job: data });
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
-  } catch (err) {
-    console.warn('Supabase toggleJobStatus fallback:', err.message);
-  }
 
-  const job = mockJobs.find((j) => j.id === jobId);
-  if (!job) {
-    return res.status(404).json({ error: 'Job listing not found.' });
+    return res.json({ message: 'Job status updated.', job: data });
+  } catch (err) {
+    console.error('toggleJobStatus error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-  job.status = req.body.status || (job.status === 'open' ? 'closed' : 'open');
-  res.json({ message: 'Job status updated.', job });
 };
 
 module.exports = {

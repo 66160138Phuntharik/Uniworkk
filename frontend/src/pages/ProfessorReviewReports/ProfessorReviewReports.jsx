@@ -6,133 +6,31 @@ import Badge from '../../components/Badge/Badge';
 import { getProfessorNavItems } from '../../utils/professorNav';
 import styles from './ProfessorReviewReports.module.css';
 
-const DEFAULT_REPORTS = [
-  {
-    id: 1,
-    studentId: 1,
-    studentName: 'Alex Johnson',
-    studentCode: '66160138',
-    company: 'TechNova Solutions',
-    position: 'Frontend Developer Intern',
-    week: 1,
-    dateRange: 'Aug 03 – Aug 07, 2026',
-    content:
-      'Orientation week at TechNova Solutions. Met the frontend engineering team, set up local Docker and Node.js dev environments, reviewed coding standards, and read system architecture documentation. Successfully configured the local development environment and created my first pull request for a minor UI bug fix.',
-    submittedDate: '2026-08-07',
-    status: 'reviewed',
-    feedback:
-      'Excellent start to your internship, Alex! Good job setting up the dev environment quickly and familiarizing yourself with the team workflow.',
-    feedbackDate: '2026-08-09',
-  },
-  {
-    id: 2,
-    studentId: 1,
-    studentName: 'Alex Johnson',
-    studentCode: '66160138',
-    company: 'TechNova Solutions',
-    position: 'Frontend Developer Intern',
-    week: 2,
-    dateRange: 'Aug 10 – Aug 14, 2026',
-    content:
-      'Developed responsive UI cards and modal dialogs using React, TypeScript, and CSS modules. Participated in daily standups and sprint planning. Refactored the document viewer component to support responsive mobile layouts with clean animations, and pair programmed with senior frontend engineer on custom React hooks.',
-    submittedDate: '2026-08-14',
-    status: 'reviewed',
-    feedback:
-      'Solid implementation of React hooks and responsive components. Keep paying attention to component modularity and reusability.',
-    feedbackDate: '2026-08-16',
-  },
-  {
-    id: 3,
-    studentId: 1,
-    studentName: 'Alex Johnson',
-    studentCode: '66160138',
-    company: 'TechNova Solutions',
-    position: 'Frontend Developer Intern',
-    week: 3,
-    dateRange: 'Aug 17 – Aug 21, 2026',
-    content:
-      'Continued work on the analytics dashboard UI. Built real-time chart cards, integrated REST API error handling states, and prepared unit test suites with Vitest. Encountered CORS configuration issues when testing against staging backend servers, which we resolved by discussing mock API service worker patterns with the backend team.',
-    submittedDate: '2026-08-20',
-    status: 'pending',
-    feedback: '',
-    feedbackDate: null,
-  },
-  {
-    id: 4,
-    studentId: 4,
-    studentName: 'Thanh Sritong',
-    studentCode: '65160085',
-    company: 'DataRock',
-    position: 'Backend Software Intern',
-    week: 2,
-    dateRange: 'Aug 10 – Aug 14, 2026',
-    content:
-      'Finished data cleaning pipeline for Q2 dataset and built automated Python validation scripts. Cleaned over 50,000 transaction records with Pandas and verified schema compliance with the staging PostgreSQL database.',
-    submittedDate: '2026-08-18',
-    status: 'pending',
-    feedback: '',
-    feedbackDate: null,
-  },
-  {
-    id: 5,
-    studentId: 2,
-    studentName: 'Maria Chen',
-    studentCode: '65160042',
-    company: 'DataRock',
-    position: 'Data Analyst Intern',
-    week: 3,
-    dateRange: 'Aug 17 – Aug 21, 2026',
-    content:
-      'Completed the Tableau executive dashboard for the sales leadership team. Received positive feedback from the VP of Operations and optimized complex SQL queries with the data team to reduce dashboard query latency from 8s to 1.2s.',
-    submittedDate: '2026-08-19',
-    status: 'pending',
-    feedback: '',
-    feedbackDate: null,
-  },
-  {
-    id: 6,
-    studentId: 6,
-    studentName: 'Siriporn Prasert',
-    studentCode: '66160099',
-    company: 'CloudScale Tech',
-    position: 'Cloud DevOps Intern',
-    week: 2,
-    dateRange: 'Aug 10 – Aug 14, 2026',
-    content:
-      'Configured GitHub Actions CI/CD workflows for automated linting, test execution, and preview deployments to AWS ECS. Assisted the infrastructure team in writing Terraform modules for staging VPC environments.',
-    submittedDate: '2026-08-15',
-    status: 'reviewed',
-    feedback:
-      'Impressive progress with CI/CD and Terraform infrastructure as code. Great work Siriporn!',
-    feedbackDate: '2026-08-17',
-  },
-];
-
 export default function ProfessorReviewReports() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialStudentId = searchParams.get('studentId');
 
-  const [reports, setReports] = useState(DEFAULT_REPORTS);
+  const [reports, setReports] = useState([]);
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [feedbackInput, setFeedbackInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState(null);
-  const [totalStudents, setTotalStudents] = useState(6);
+  const [totalStudents, setTotalStudents] = useState(0);
 
   // Fetch reports from backend
   const fetchReports = () => {
     fetch('http://localhost:5000/api/professors/reports')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.reports && data.reports.length > 0) {
+        if (data && Array.isArray(data.reports)) {
           setReports(data.reports);
         }
       })
       .catch((err) => {
-        console.warn('Could not load reports from backend, using local mock data:', err);
+        console.warn('Could not load reports from backend:', err);
       });
 
     fetch('http://localhost:5000/api/professors/students')
@@ -235,18 +133,9 @@ export default function ProfessorReviewReports() {
       } else {
         throw new Error('Server returned non-200');
       }
-    } catch {
-      // Local fallback in case backend is offline
-      const updated = {
-        ...selectedReport,
-        feedback: feedbackInput.trim(),
-        status: 'reviewed',
-        feedbackDate: new Date().toISOString().split('T')[0],
-      };
-      setReports((prev) =>
-        prev.map((r) => (r.id === selectedReport.id ? updated : r))
-      );
-      showToast('Feedback updated locally (Mock mode).', 'success');
+    } catch (err) {
+      console.error('Feedback submit error:', err);
+      showToast('Failed to submit feedback to server. Please try again.', 'danger');
     } finally {
       setIsSaving(false);
     }

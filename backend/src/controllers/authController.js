@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
-const { mockUsers } = require('../data/mockData');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 
@@ -22,55 +21,40 @@ const login = async (req, res) => {
       .eq('role', role)
       .maybeSingle();
 
-    if (!error && user) {
-      let studentDetails = null;
-      if (user.role === 'student') {
-        const { data: st } = await supabase
-          .from('students')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-        studentDetails = st;
-      }
-
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role, name: user.name },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-
-      const { password: _pw, ...safeUser } = user;
-      return res.json({
-        token,
-        user: {
-          ...safeUser,
-          studentCode: studentDetails?.student_code || null,
-          faculty: studentDetails?.faculty || null,
-          major: studentDetails?.major || user.major,
-        },
-      });
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid credentials or incorrect role selected.' });
     }
+
+    let studentDetails = null;
+    if (user.role === 'student') {
+      const { data: st } = await supabase
+        .from('students')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      studentDetails = st;
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, name: user.name },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    const { password: _pw, ...safeUser } = user;
+    return res.json({
+      token,
+      user: {
+        ...safeUser,
+        studentCode: studentDetails?.student_code || null,
+        faculty: studentDetails?.faculty || null,
+        major: studentDetails?.major || user.major,
+      },
+    });
   } catch (err) {
-    console.warn('Supabase login fallback:', err.message);
+    console.error('Supabase login error:', err.message);
+    return res.status(500).json({ error: 'Internal authentication server error.' });
   }
-
-  // Fallback to mock data
-  const user = mockUsers.find(
-    (u) => u.email.toLowerCase() === cleanEmail && u.password === password && u.role === role
-  );
-
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials or incorrect role selected.' });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role, name: user.name },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  const { password: _pw, ...safeUser } = user;
-  res.json({ token, user: safeUser });
 };
 
 const register = async (req, res) => {
