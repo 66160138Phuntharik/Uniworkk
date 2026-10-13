@@ -79,6 +79,14 @@ export default function CompanyPostJob() {
     }
   };
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -100,6 +108,8 @@ export default function CompanyPostJob() {
       location,
       salary,
       description,
+      company: currentUser?.name || 'TechNova Solutions',
+      companyId: currentUser?.id || 1,
       responsibilities: responsibilities
         .split('\n')
         .map((r) => r.trim())
@@ -127,12 +137,18 @@ export default function CompanyPostJob() {
     }, 1000);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
         navItems={getCompanyNavItems('post-job', navigate, 5)}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>

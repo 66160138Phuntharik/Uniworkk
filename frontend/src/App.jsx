@@ -6,6 +6,8 @@ import StudentProfile from './pages/StudentProfile/StudentProfile.jsx';
 import FindInternships from './pages/FindInternships/FindInternships.jsx';
 import WeeklyReports from './pages/WeeklyReports/WeeklyReports.jsx';
 import ProfessorDashboard from './pages/ProfessorDashboard/ProfessorDashboard.jsx';
+import ProfessorStudentList from './pages/ProfessorStudentList/ProfessorStudentList.jsx';
+import ProfessorReviewReports from './pages/ProfessorReviewReports/ProfessorReviewReports.jsx';
 import CompanyDashboard from './pages/CompanyDashboard/CompanyDashboard.jsx';
 import CompanyJobListings from './pages/CompanyJobListings/CompanyJobListings.jsx';
 import CompanyApplicants from './pages/CompanyApplicants/CompanyApplicants.jsx';
@@ -24,6 +26,8 @@ export default function App() {
         <Route path="/student/internships" element={<FindInternships />} />
         <Route path="/student/reports" element={<WeeklyReports />} />
         <Route path="/professor/dashboard" element={<ProfessorDashboard />} />
+        <Route path="/professor/students" element={<ProfessorStudentList />} />
+        <Route path="/professor/reports" element={<ProfessorReviewReports />} />
         <Route path="/company/dashboard" element={<CompanyDashboard />} />
         <Route path="/company/jobs" element={<CompanyJobListings />} />
         <Route path="/company/applicants" element={<CompanyApplicants />} />

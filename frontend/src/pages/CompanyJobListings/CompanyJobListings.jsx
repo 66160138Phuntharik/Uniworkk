@@ -84,7 +84,7 @@ export default function CompanyJobListings() {
 
   // Fetch real data if backend server is active
   useEffect(() => {
-    fetch('http://localhost:5000/api/companies/jobs?companyId=2')
+    fetch('http://localhost:5000/api/companies/jobs')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.jobs && data.jobs.length > 0) {
@@ -168,12 +168,18 @@ export default function CompanyJobListings() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
         navItems={getCompanyNavItems('jobs', navigate, 5)}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>

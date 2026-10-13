@@ -137,7 +137,7 @@ export default function CompanyApplicants() {
     fetch('http://localhost:5000/api/companies/applicants')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.applicants && data.applicants.length > 0) {
+        if (data && data.applicants) {
           setApplicants(data.applicants);
         }
       })
@@ -230,12 +230,18 @@ export default function CompanyApplicants() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
         navItems={getCompanyNavItems('applicants', navigate, applicants.length)}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>

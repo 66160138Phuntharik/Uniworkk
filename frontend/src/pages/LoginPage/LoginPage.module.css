@@ -34,6 +34,36 @@
   margin-bottom: 28px;
 }
 
+/* ── Auth Mode Tabs (Sign In vs Register) ──────────────────── */
+.modeTabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.modeTab {
+  flex: 1;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modeTab:hover {
+  color: var(--dark);
+}
+.modeTabActive {
+  background: var(--white);
+  color: var(--dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 /* ── Role Tabs ─────────────────────────────────────────────── */
 .roleTabs {
   display: flex;
@@ -41,7 +71,7 @@
   background: var(--bg);
   padding: 5px;
   border-radius: var(--radius);
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 .roleTab {
   flex: 1;
@@ -91,8 +121,49 @@
   font-size: 0.88rem;
   margin-bottom: 14px;
 }
+.successBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+}
 .field {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+}
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+.togglePrompt {
+  margin-top: 16px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+.toggleBtn {
+  background: none;
+  border: none;
+  color: var(--primary-dark, #d97706);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  text-decoration: underline;
+  font-size: 0.88rem;
+}
+.toggleBtn:hover {
+  color: var(--dark);
 }
 .label {
   display: block;

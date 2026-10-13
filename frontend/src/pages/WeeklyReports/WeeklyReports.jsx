@@ -3,54 +3,35 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import styles from './WeeklyReports.module.css';
 
-const DEFAULT_REPORTS = [
-  {
-    id: 1,
-    studentId: 1,
-    studentName: 'Alex Johnson',
-    company: 'TechNova Solutions',
-    week: 1,
-    dateRange: 'Aug 03 – Aug 07, 2026',
-    content: 'Orientation week at TechNova Solutions. Met the frontend engineering team, set up local Docker and Node.js dev environments, reviewed coding standards, and read system architecture documentation. Successfully configured the local development environment and created my first pull request for a minor UI bug fix.',
-    submittedDate: '2026-08-07',
-  },
-  {
-    id: 2,
-    studentId: 1,
-    studentName: 'Alex Johnson',
-    company: 'TechNova Solutions',
-    week: 2,
-    dateRange: 'Aug 10 – Aug 14, 2026',
-    content: 'Developed responsive UI cards and modal dialogs using React, TypeScript, and CSS modules. Participated in daily standups and sprint planning. Refactored the document viewer component to support responsive mobile layouts with clean animations, and pair programmed with senior frontend engineer on custom React hooks.',
-    submittedDate: '2026-08-14',
-  },
-  {
-    id: 3,
-    studentId: 1,
-    studentName: 'Alex Johnson',
-    company: 'TechNova Solutions',
-    week: 3,
-    dateRange: 'Aug 17 – Aug 21, 2026',
-    content: 'Continued work on the analytics dashboard UI. Built real-time chart cards, integrated REST API error handling states, and prepared unit test suites with Vitest. Encountered CORS configuration issues when testing against staging backend servers, which we resolved by discussing mock API service worker patterns with the backend team.',
-    submittedDate: '2026-08-20',
-  },
-];
 
 const DEFAULT_STATS = {
   totalWeeksRequired: 16,
-  submittedWeeks: 3,
-  nextDueWeek: 4,
-  company: 'TechNova Solutions',
-  position: 'Frontend Developer Intern',
+  submittedWeeks: 0,
+  nextDueWeek: 1,
+  company: 'Pending Internship Placement',
+  position: 'Internship Trainee',
 };
 
 export default function WeeklyReports() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const studentId = currentUser?.id || 1;
+
   // State
-  const [reports, setReports] = useState(DEFAULT_REPORTS);
+  const [reports, setReports] = useState([]);
   const [stats, setStats] = useState(DEFAULT_STATS);
+  const [profile, setProfile] = useState({
+    nameEn: currentUser?.name || 'Student',
+    studentCode: currentUser?.studentCode || '',
+  });
   const [toast, setToast] = useState(null);
 
   // Modal State
@@ -59,25 +40,34 @@ export default function WeeklyReports() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form Fields (Only Week, Date Range, and ONE large content textarea)
-  const [formWeek, setFormWeek] = useState(4);
-  const [formDateRange, setFormDateRange] = useState('Aug 24 – Aug 28, 2026');
+  const [formWeek, setFormWeek] = useState(1);
+  const [formDateRange, setFormDateRange] = useState('Week 1 Period (Aug 2026)');
   const [formContent, setFormContent] = useState('');
 
   // Sidebar navigation items
   const navItems = [
     { iconClass: 'bi-grid-1x2-fill', label: 'Dashboard', onClick: () => navigate('/student/dashboard') },
     { iconClass: 'bi-search', label: 'Find Internships', onClick: () => navigate('/student/internships') },
-    { iconClass: 'bi-briefcase', label: 'Application Status', badge: '3', onClick: () => navigate('/student/internships') },
-    { iconClass: 'bi-journal-text', label: 'Weekly Reports', active: true },
+    { iconClass: 'bi-briefcase', label: 'Application Status', onClick: () => navigate('/student/internships') },
+    { iconClass: 'bi-journal-text', label: 'Weekly Reports', badge: reports.length > 0 ? String(reports.length) : undefined, active: true },
     { iconClass: 'bi-person-badge', label: 'Profile & Resume', onClick: () => navigate('/student/profile') },
   ];
 
   // Fetch from backend on mount
   useEffect(() => {
-    fetch('http://localhost:5000/api/students/1/reports')
+    fetch(`http://localhost:5000/api/students/${studentId}/profile`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.reports && data.reports.length) {
+        if (data && data.profile) {
+          setProfile(data.profile);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`http://localhost:5000/api/students/${studentId}/reports`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.reports) {
           setReports(data.reports);
           if (data.stats) setStats(data.stats);
         }
@@ -89,7 +79,7 @@ export default function WeeklyReports() {
     if (params.get('new') === 'true') {
       handleOpenNewModal();
     }
-  }, [location.search]);
+  }, [location.search, studentId]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -131,7 +121,7 @@ export default function WeeklyReports() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/students/1/reports', {
+      const res = await fetch(`http://localhost:5000/api/students/${studentId}/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -155,7 +145,7 @@ export default function WeeklyReports() {
       const newRep = {
         id: editingReportId || Date.now(),
         studentId: 1,
-        studentName: 'Alex Johnson',
+        studentName: profile.nameEn || 'Student',
         company: stats.company || 'TechNova Solutions',
         week: parseInt(formWeek),
         dateRange: formDateRange,
@@ -196,12 +186,18 @@ export default function WeeklyReports() {
     Math.round((stats.submittedWeeks / stats.totalWeeksRequired) * 100)
   );
 
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Student"
         navItems={navItems}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>
@@ -255,7 +251,7 @@ export default function WeeklyReports() {
 
             <div className={styles.studentMetaBadge}>
               <i className="bi bi-person-fill" />
-              <span>Alex Johnson (ID: 66160138)</span>
+              <span>{profile.nameEn || 'Student'} (ID: {profile.studentCode || '66160138'})</span>
             </div>
           </div>
 
@@ -289,36 +285,51 @@ export default function WeeklyReports() {
 
         {/* ── Reports Feed ────────────────────────────────── */}
         <div className={styles.reportsFeed}>
-          {reports.map((rep) => (
-            <article key={rep.id} className={styles.reportCard}>
-              {/* Card Header */}
-              <div className={styles.cardHeader}>
-                <div className={styles.cardTitleBlock}>
-                  <span className={styles.weekTag}>
-                    <i className="bi bi-calendar-event" /> Week {rep.week}
-                  </span>
-                  <h3 className={styles.weekDates}>{rep.dateRange}</h3>
+          {reports.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--white)', borderRadius: '12px', border: '1px dashed var(--border)', boxShadow: 'var(--shadow-xs)' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', margin: '0 auto 16px' }}>
+                <i className="bi bi-journal-plus" />
+              </div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '8px' }}>No Weekly Reports Submitted Yet</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', maxWidth: '420px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+                You have not submitted any weekly reports yet. Once you start your internship, record your weekly progress and learning logs here.
+              </p>
+              <button className={styles.newReportBtn} style={{ margin: '0 auto', display: 'inline-flex' }} onClick={handleOpenNewModal}>
+                <i className="bi bi-plus-circle-fill" /> Write First Weekly Report
+              </button>
+            </div>
+          ) : (
+            reports.map((rep) => (
+              <article key={rep.id} className={styles.reportCard}>
+                {/* Card Header */}
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardTitleBlock}>
+                    <span className={styles.weekTag}>
+                      <i className="bi bi-calendar-event" /> Week {rep.week}
+                    </span>
+                    <h3 className={styles.weekDates}>{rep.dateRange}</h3>
+                  </div>
+
+                  <div className={styles.submittedDateNote}>
+                    <i className="bi bi-clock-history" /> Submitted: {rep.submittedDate}
+                  </div>
                 </div>
 
-                <div className={styles.submittedDateNote}>
-                  <i className="bi bi-clock-history" /> Submitted: {rep.submittedDate}
+                {/* Single Large Content Text */}
+                <p className={styles.reportContent}>{rep.content}</p>
+
+                {/* Card Footer Actions */}
+                <div className={styles.cardFooter}>
+                  <button
+                    className={styles.editBtn}
+                    onClick={() => handleOpenEditModal(rep)}
+                  >
+                    <i className="bi bi-pencil-square" /> Edit Report
+                  </button>
                 </div>
-              </div>
-
-              {/* Single Large Content Text */}
-              <p className={styles.reportContent}>{rep.content}</p>
-
-              {/* Card Footer Actions */}
-              <div className={styles.cardFooter}>
-                <button
-                  className={styles.editBtn}
-                  onClick={() => handleOpenEditModal(rep)}
-                >
-                  <i className="bi bi-pencil-square" /> Edit Report
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))
+          )}
         </div>
 
         {/* ── MODAL: Write / Edit Weekly Report ────────────── */}

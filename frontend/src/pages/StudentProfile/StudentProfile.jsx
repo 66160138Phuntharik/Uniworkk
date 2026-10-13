@@ -46,9 +46,33 @@ const INITIAL_DOCS = [
 export default function StudentProfile() {
   const navigate = useNavigate();
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const studentId = currentUser?.id || 1;
+
   // State
-  const [profile, setProfile] = useState(INITIAL_PROFILE);
-  const [documents, setDocuments] = useState(INITIAL_DOCS);
+  const [profile, setProfile] = useState(() => {
+    if (currentUser && currentUser.role === 'student') {
+      return {
+        studentId: currentUser.id,
+        studentCode: currentUser.studentCode || '',
+        nameTh: currentUser.name || '',
+        nameEn: currentUser.name || '',
+        faculty: currentUser.faculty || 'Faculty of Informatics',
+        department: currentUser.major || currentUser.department || 'Computer Science',
+        year: '4th Year',
+        gpa: 3.5,
+        email: currentUser.email || '',
+      };
+    }
+    return INITIAL_PROFILE;
+  });
+  const [documents, setDocuments] = useState(studentId === 1 ? INITIAL_DOCS : []);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'documents'
   const [docFilter, setDocFilter] = useState('all'); // 'all' | 'resume' | 'cv'
   const [toast, setToast] = useState(null);
@@ -68,27 +92,27 @@ export default function StudentProfile() {
   const navItems = [
     { iconClass: 'bi-grid-1x2-fill', label: 'Dashboard', onClick: () => navigate('/student/dashboard') },
     { iconClass: 'bi-search', label: 'Find Internships', onClick: () => navigate('/student/internships') },
-    { iconClass: 'bi-briefcase', label: 'Application Status', badge: '3', onClick: () => navigate('/student/internships') },
+    { iconClass: 'bi-briefcase', label: 'Application Status', onClick: () => navigate('/student/internships') },
     { iconClass: 'bi-journal-text', label: 'Weekly Reports', onClick: () => navigate('/student/reports') },
     { iconClass: 'bi-person-badge', label: 'Profile & Resume', active: true },
   ];
 
   // Try fetching real API data if backend is available
   useEffect(() => {
-    fetch('http://localhost:5000/api/students/1/profile')
+    fetch(`http://localhost:5000/api/students/${studentId}/profile`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile) {
           setProfile((prev) => ({ ...prev, ...data.profile }));
-          if (data.documents && data.documents.length) {
+          if (data.documents) {
             setDocuments(data.documents);
           }
         }
       })
       .catch(() => {
-        // Fallback gracefully to preloaded mock state
+        // Fallback gracefully
       });
-  }, []);
+  }, [studentId]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -104,17 +128,30 @@ export default function StudentProfile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      await fetch('http://localhost:5000/api/students/1/profile', {
+      const res = await fetch(`http://localhost:5000/api/students/${studentId}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.profile) {
+          setProfile((prev) => ({ ...prev, ...data.profile }));
+          if (currentUser) {
+            localStorage.setItem('uniwork_user', JSON.stringify({
+              ...currentUser,
+              name: data.profile.nameEn || data.profile.nameTh || currentUser.name,
+              major: data.profile.department || currentUser.major,
+            }));
+          }
+        }
+      }
     } catch {
       // Offline fallback
     } finally {
       setTimeout(() => {
         setIsSaving(false);
-        showToast('Academic and personal information saved successfully! ✅');
+        showToast('Academic information saved successfully! ✅');
       }, 400);
     }
   };
@@ -150,7 +187,7 @@ export default function StudentProfile() {
     setUploadTitle('');
     setUploadFileName('');
     setUploadIsPrimary(false);
-    showToast(`"${newDoc.title}" uploaded to your vault! 📄`);
+    showToast(`"${newDoc.title}" uploaded to your documents! 📄`);
   };
 
   const handleSetPrimary = (docId) => {
@@ -160,13 +197,13 @@ export default function StudentProfile() {
         isPrimary: doc.id === docId,
       }))
     );
-    showToast('Primary document updated for 1-click applications! ⭐');
+    showToast('Primary document updated! ⭐');
   };
 
   const handleDeleteDocument = (docId, title) => {
     if (window.confirm(`Are you sure you want to remove "${title}"?`)) {
       setDocuments((prev) => prev.filter((d) => d.id !== docId));
-      showToast(`Removed "${title}" from your documents.`);
+      showToast(`Removed "${title}".`);
     }
   };
 
@@ -180,34 +217,39 @@ export default function StudentProfile() {
     return doc.type === docFilter;
   });
 
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Student"
         navItems={navItems}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>
         {/* ── Header ─────────────────────────────────────── */}
         <header className={styles.header}>
           <div className={styles.titleArea}>
-            <h1 className={styles.pageTitle}>
-              <i className="bi bi-person-badge-fill" style={{ color: 'var(--primary)' }} />
-              Student Profile & Document Vault
-            </h1>
+            <h1 className={styles.pageTitle}>Student Profile & Resume</h1>
             <p className={styles.pageSubtitle}>
-              Manage your academic details and upload your Resume and CV for 4th-year internship placement.
+              Manage your academic details and resume documents for internship applications.
             </p>
           </div>
           <div className={styles.headerActions}>
             <button className={styles.backBtn} onClick={() => navigate('/student/dashboard')}>
               <i className="bi bi-arrow-left" /> Back to Dashboard
             </button>
-            <button className={styles.saveBtn} onClick={handleSaveProfile} disabled={isSaving}>
-              <i className="bi bi-check2-circle" />
-              {isSaving ? 'Saving…' : 'Save Changes'}
-            </button>
+            {activeTab === 'overview' && (
+              <button className={styles.saveBtn} onClick={handleSaveProfile} disabled={isSaving}>
+                <i className="bi bi-check2-circle" />
+                {isSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+            )}
           </div>
         </header>
 
@@ -215,40 +257,36 @@ export default function StudentProfile() {
         {toast && (
           <div className={`${styles.toast} ${toast.type === 'info' ? styles.toastInfo : styles.toastSuccess}`} role="alert">
             <span>{toast.message}</span>
-            <button className={styles.modalCloseBtn} onClick={() => setToast(null)}>×</button>
+            <button className={styles.toastCloseBtn} onClick={() => setToast(null)}>×</button>
           </div>
         )}
 
-        {/* ── Profile Hero Card ───────────────────────────── */}
+        {/* ── Simplified Student Name Bar ─────────────────── */}
         <section className={styles.profileHero}>
           <div className={styles.heroLeft}>
-            <div className={styles.avatarLarge}>
+            <div className={styles.avatar}>
               {profile.nameEn ? profile.nameEn.charAt(0) : 'S'}
             </div>
 
             <div className={styles.heroMeta}>
               <div className={styles.heroNameRow}>
                 <h2 className={styles.heroName}>{profile.nameEn}</h2>
-                <span className={styles.studentCodeBadge}>ID: {profile.studentCode}</span>
-                <Badge variant="success">Placed Student</Badge>
+                {profile.nameTh && (
+                  <span className={styles.heroNameTh}>({profile.nameTh})</span>
+                )}
               </div>
-              <div className={styles.heroSubtitle}>
-                <span className={styles.heroSubItem}>
-                  <i className="bi bi-mortarboard-fill" /> {profile.faculty} – {profile.department}
-                </span>
-                <span className={styles.heroSubItem}>
-                  <i className="bi bi-star-fill" style={{ color: '#ffc107' }} /> GPA: {profile.gpa}
-                </span>
-                <span className={styles.heroSubItem}>
-                  <i className="bi bi-envelope-fill" /> {profile.email}
-                </span>
+              <div className={styles.heroMetaDetails}>
+                <span className={styles.studentIdText}>ID: {profile.studentCode}</span>
+                <span className={styles.metaDivider}>•</span>
+                <span>{profile.department}</span>
+                <span className={styles.metaDivider}>•</span>
+                <span>{profile.faculty}</span>
               </div>
             </div>
           </div>
 
-          <div className={styles.eligibilityBadge}>
-            <i className="bi bi-mortarboard-fill" style={{ fontSize: '1.2rem' }} />
-            <span>4th-Year Student (Internship Eligible)</span>
+          <div className={styles.heroRight}>
+            <Badge variant="success">Placed Student</Badge>
           </div>
         </section>
 
@@ -258,26 +296,28 @@ export default function StudentProfile() {
             className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            <i className="bi bi-person-lines-fill" /> Academic & Personal Details
+            <i className="bi bi-person-lines-fill" /> Profile Information
           </button>
           <button
             className={`${styles.tabBtn} ${activeTab === 'documents' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('documents')}
           >
-            <i className="bi bi-file-earmark-person-fill" /> Resume & CV Vault
+            <i className="bi bi-file-earmark-person-fill" /> Resume & Documents
             <span className={styles.tabCount}>{documents.length}</span>
           </button>
         </nav>
 
-        {/* ── TAB 1: Academic & Personal Details ─────────── */}
+        {/* ── TAB 1: Profile Information ──────────────────── */}
         {activeTab === 'overview' && (
           <div className={styles.singleCardWrap}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <i className="bi bi-person-bounding-box" /> Student Academic Information
-                </h3>
+                <div>
+                  <h3 className={styles.cardTitle}>Academic Information</h3>
+                  <p className={styles.cardSubtitle}>Review and update your university details</p>
+                </div>
               </div>
+
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Full Name (English)</label>
@@ -345,17 +385,31 @@ export default function StudentProfile() {
                 </div>
 
                 <div className={styles.eligibilityNotice}>
-                  <i className="bi bi-info-circle-fill" style={{ fontSize: '1.1rem', color: '#fa8c16' }} />
+                  <i className="bi bi-info-circle-fill" />
                   <span>
-                    <strong>Note:</strong> Internship programs in UniWork are exclusively available to <strong>4th-year students</strong> who have met academic prerequisite requirements.
+                    <strong>Eligibility:</strong> Internship programs in UniWork are for <strong>4th-year students</strong> who meet academic prerequisites.
                   </span>
                 </div>
+              </div>
+
+              <div className={styles.formFooter}>
+                <span className={styles.formFooterInfo}>
+                  Changes will be reflected in your internship applications.
+                </span>
+                <button
+                  className={styles.saveBtn}
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                >
+                  <i className="bi bi-check2-circle" />
+                  {isSaving ? 'Saving…' : 'Save Changes'}
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── TAB 2: Resume & CV Vault ───────────────────── */}
+        {/* ── TAB 2: Resume & Documents ───────────────────── */}
         {activeTab === 'documents' && (
           <div className={styles.gridFull}>
             {/* Top Bar with Filter and Upload Button */}
@@ -371,105 +425,140 @@ export default function StudentProfile() {
                   className={`${styles.filterPill} ${docFilter === 'resume' ? styles.filterPillActive : ''}`}
                   onClick={() => setDocFilter('resume')}
                 >
-                  Resume ({documents.filter((d) => d.type === 'resume').length})
+                  Resumes ({documents.filter((d) => d.type === 'resume').length})
                 </button>
                 <button
                   className={`${styles.filterPill} ${docFilter === 'cv' ? styles.filterPillActive : ''}`}
                   onClick={() => setDocFilter('cv')}
                 >
-                  CV ({documents.filter((d) => d.type === 'cv').length})
+                  CVs ({documents.filter((d) => d.type === 'cv').length})
                 </button>
               </div>
 
               <button className={styles.uploadTriggerBtn} onClick={() => setShowUploadModal(true)}>
-                <i className="bi bi-cloud-arrow-up-fill" /> Upload Resume / CV
+                <i className="bi bi-cloud-arrow-up-fill" /> Upload Document
               </button>
             </div>
 
-            {/* Drag & Drop Trigger Box */}
+            {/* Clean Upload Trigger Banner */}
             <div className={styles.dropzone} onClick={() => setShowUploadModal(true)}>
-              <i className={`bi bi-file-earmark-arrow-up ${styles.dropzoneIcon}`} />
-              <div className={styles.dropzoneTitle}>Upload Resume or CV</div>
-              <div className={styles.dropzoneHint}>
-                Supports PDF or DOCX (Max 10MB). Click here to upload your Resume or Curriculum Vitae.
+              <div className={styles.dropzoneLeft}>
+                <div className={styles.dropzoneIconWrap}>
+                  <i className={`bi bi-cloud-arrow-up-fill ${styles.dropzoneIcon}`} />
+                </div>
+                <div>
+                  <div className={styles.dropzoneTitle}>Upload a new Resume or CV</div>
+                  <div className={styles.dropzoneHint}>
+                    Supported formats: PDF or DOCX (up to 10MB)
+                  </div>
+                </div>
               </div>
+              <button type="button" className={styles.dropzoneBtn}>
+                Select File
+              </button>
             </div>
 
             {/* Document Card Grid */}
-            <div className={styles.docGrid}>
-              {filteredDocs.map((doc) => (
-                <div
-                  key={doc.id}
-                  className={`${styles.docCard} ${doc.isPrimary ? styles.docCardPrimary : ''}`}
-                >
-                  <div className={styles.docTop}>
-                    <div
-                      className={`${styles.fileIconWrap} ${
-                        doc.type === 'cv' ? styles.fileIconDoc : ''
-                      }`}
-                    >
-                      <i className={doc.type === 'cv' ? 'bi bi-file-earmark-text' : 'bi bi-file-earmark-person'} />
-                    </div>
-                    <div className={styles.docMeta}>
-                      <h4 className={styles.docTitle}>{doc.title}</h4>
-                      <div className={styles.docDetails}>
-                        <span><i className="bi bi-file-earmark" /> {doc.fileName}</span>
-                        <span>•</span>
-                        <span>{doc.fileSize}</span>
-                        <span>•</span>
-                        <span>{doc.uploadDate}</span>
+            {filteredDocs.length > 0 ? (
+              <div className={styles.docGrid}>
+                {filteredDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className={`${styles.docCard} ${doc.isPrimary ? styles.docCardPrimary : ''}`}
+                  >
+                    <div className={styles.docTop}>
+                      <div
+                        className={`${styles.fileIconWrap} ${
+                          doc.type === 'cv' ? styles.fileIconDoc : ''
+                        }`}
+                      >
+                        <i className={doc.type === 'cv' ? 'bi bi-file-earmark-text' : 'bi bi-file-earmark-pdf'} />
                       </div>
-                      <div className={styles.docBadgeRow}>
-                        {doc.isPrimary && (
-                          <span className={styles.primaryBadge}>
-                            <i className="bi bi-star-fill" /> Primary Document
+                      <div className={styles.docMeta}>
+                        <div className={styles.docTitleRow}>
+                          <h4 className={styles.docTitle}>{doc.title}</h4>
+                          {doc.isPrimary && (
+                            <span className={styles.primaryBadge}>
+                              <i className="bi bi-star-fill" /> Primary
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.docDetails}>
+                          <span>{doc.fileName}</span>
+                          <span className={styles.dotSeparator}>•</span>
+                          <span>{doc.fileSize}</span>
+                          <span className={styles.dotSeparator}>•</span>
+                          <span>{doc.uploadDate}</span>
+                        </div>
+                        <div className={styles.docBadgeRow}>
+                          <span className={styles.typeBadge}>
+                            {doc.type === 'cv' ? 'CV' : 'Resume'}
                           </span>
-                        )}
-                        <span className={styles.typeBadge}>
-                          {doc.type === 'cv' ? 'Curriculum Vitae (CV)' : 'Resume'}
-                        </span>
-                        <Badge variant="success">Verified</Badge>
+                          <Badge variant="success">Verified</Badge>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className={styles.docActions}>
-                    <div className={styles.actionLeft}>
-                      <button
-                        className={styles.docBtn}
-                        onClick={() => setPreviewDoc(doc)}
-                        title="Preview document"
-                      >
-                        <i className="bi bi-eye" /> Preview
-                      </button>
-                      <button
-                        className={styles.docBtn}
-                        onClick={() => handleSimulatedDownload(doc)}
-                        title="Download file"
-                      >
-                        <i className="bi bi-download" /> Download
-                      </button>
-                      {!doc.isPrimary && (
+                    <div className={styles.docActions}>
+                      <div className={styles.actionLeft}>
                         <button
-                          className={`${styles.docBtn} ${styles.docBtnPrimaryStar}`}
-                          onClick={() => handleSetPrimary(doc.id)}
-                          title="Set as primary document for applications"
+                          className={styles.docBtn}
+                          onClick={() => setPreviewDoc(doc)}
+                          title="Preview document"
                         >
-                          <i className="bi bi-star" /> Set Primary
+                          <i className="bi bi-eye" /> Preview
                         </button>
-                      )}
+                        <button
+                          className={styles.docBtn}
+                          onClick={() => handleSimulatedDownload(doc)}
+                          title="Download file"
+                        >
+                          <i className="bi bi-download" /> Download
+                        </button>
+                        {!doc.isPrimary && (
+                          <button
+                            className={`${styles.docBtn} ${styles.docBtnPrimaryStar}`}
+                            onClick={() => handleSetPrimary(doc.id)}
+                            title="Set as primary document for applications"
+                          >
+                            <i className="bi bi-star" /> Set Primary
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        className={`${styles.docBtn} ${styles.docBtnDelete}`}
+                        onClick={() => handleDeleteDocument(doc.id, doc.title)}
+                        title="Delete document"
+                      >
+                        <i className="bi bi-trash" />
+                      </button>
                     </div>
-                    <button
-                      className={`${styles.docBtn} ${styles.docBtnDelete}`}
-                      onClick={() => handleDeleteDocument(doc.id, doc.title)}
-                      title="Delete document"
-                    >
-                      <i className="bi bi-trash" />
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : documents.length === 0 ? (
+              <div className={styles.emptyState}>
+                <i className="bi bi-folder2-open" style={{ fontSize: '2.5rem', color: 'var(--text-muted)' }} />
+                <p className={styles.emptyStateText}>No documents uploaded yet in your Document Vault.</p>
+                <button
+                  type="button"
+                  className={styles.saveBtn}
+                  style={{ marginTop: '12px' }}
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  <i className="bi bi-cloud-arrow-up-fill" style={{ marginRight: '6px' }} />
+                  Upload First Resume
+                </button>
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <i className="bi bi-folder2-open" style={{ fontSize: '2.5rem', color: 'var(--text-muted)' }} />
+                <p className={styles.emptyStateText}>No documents found matching this filter.</p>
+                <button className={styles.backBtn} onClick={() => setDocFilter('all')}>
+                  Show All Documents
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -521,15 +610,15 @@ export default function StudentProfile() {
                     <span className={styles.helpText}>Supported formats: .pdf, .docx</span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                  <div className={styles.checkboxRow}>
                     <input
                       type="checkbox"
                       id="primaryCheckbox"
                       checked={uploadIsPrimary}
                       onChange={(e) => setUploadIsPrimary(e.target.checked)}
-                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      className={styles.checkbox}
                     />
-                    <label htmlFor="primaryCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
+                    <label htmlFor="primaryCheckbox" className={styles.checkboxLabel}>
                       Set as Primary document for 1-click internship applications
                     </label>
                   </div>
@@ -563,17 +652,17 @@ export default function StudentProfile() {
 
               <div className={styles.modalBody}>
                 <div className={styles.previewViewer}>
-                  <div style={{ fontSize: '3rem', color: '#dc2626' }}>
-                    <i className={previewDoc.type === 'cv' ? 'bi bi-file-earmark-text' : 'bi bi-file-earmark-person'} />
+                  <div className={styles.previewIconWrap}>
+                    <i className={previewDoc.type === 'cv' ? 'bi bi-file-earmark-text' : 'bi bi-file-earmark-pdf'} />
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--dark)' }}>
+                  <div className={styles.previewTitle}>
                     {previewDoc.title}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    File: {previewDoc.fileName} • {previewDoc.fileSize}
+                  <div className={styles.previewSubtitle}>
+                    {previewDoc.fileName} • {previewDoc.fileSize}
                   </div>
-                  <div style={{ marginTop: '12px', padding: '10px 16px', background: '#eef2ff', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: '#3730a3' }}>
-                    <i className="bi bi-shield-check" /> Document verified and ready for internship applications.
+                  <div className={styles.previewNotice}>
+                    <i className="bi bi-shield-check" /> Verified document ready for internship applications.
                   </div>
                 </div>
 
@@ -583,7 +672,7 @@ export default function StudentProfile() {
                     <input type="text" className={`${styles.input} ${styles.inputReadonly}`} value={previewDoc.uploadDate} disabled />
                   </div>
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Type</label>
+                    <label className={styles.label}>Document Type</label>
                     <input
                       type="text"
                       className={`${styles.input} ${styles.inputReadonly}`}

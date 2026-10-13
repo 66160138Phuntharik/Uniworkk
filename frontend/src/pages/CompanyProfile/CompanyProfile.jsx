@@ -66,12 +66,18 @@ export default function CompanyProfile() {
     showToast('Company profile changes saved successfully!');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
         navItems={getCompanyNavItems('profile', navigate, 5)}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>

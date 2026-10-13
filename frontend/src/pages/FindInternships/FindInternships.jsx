@@ -156,10 +156,19 @@ const CATEGORIES = [
 export default function FindInternships() {
   const navigate = useNavigate();
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const studentId = currentUser?.id || 1;
+
   // Data states
   const [jobs, setJobs] = useState(DEFAULT_JOBS);
-  const [applications, setApplications] = useState(DEFAULT_APPLICATIONS);
-  const [documents, setDocuments] = useState(DEFAULT_DOCS);
+  const [applications, setApplications] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [activeView, setActiveView] = useState('explore'); // 'explore' | 'applied'
   const [toast, setToast] = useState(null);
 
@@ -171,9 +180,10 @@ export default function FindInternships() {
 
   // Modal states
   const [selectedJob, setSelectedJob] = useState(null);
-  const [selectedDoc, setSelectedDoc] = useState(DEFAULT_DOCS[0]?.fileName || '');
+  const [selectedDoc, setSelectedDoc] = useState('');
   const [coverNote, setCoverNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quickApplyingJobId, setQuickApplyingJobId] = useState(null);
 
   // Nav Items
   const navItems = [
@@ -182,7 +192,7 @@ export default function FindInternships() {
     {
       iconClass: 'bi-briefcase',
       label: 'Application Status',
-      badge: String(applications.length),
+      badge: applications.length > 0 ? String(applications.length) : undefined,
       onClick: () => setActiveView('applied'),
     },
     { iconClass: 'bi-journal-text', label: 'Weekly Reports', onClick: () => navigate('/student/reports') },
@@ -200,26 +210,26 @@ export default function FindInternships() {
       })
       .catch(() => {});
 
-    fetch('http://localhost:5000/api/students/1/applications')
+    fetch(`http://localhost:5000/api/students/${studentId}/applications`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.applications && data.applications.length) {
+        if (data && data.applications) {
           setApplications(data.applications);
         }
       })
       .catch(() => {});
 
-    fetch('http://localhost:5000/api/students/1/documents')
+    fetch(`http://localhost:5000/api/students/${studentId}/documents`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.documents && data.documents.length) {
+        if (data && data.documents) {
           setDocuments(data.documents);
           const primary = data.documents.find((d) => d.isPrimary) || data.documents[0];
           if (primary) setSelectedDoc(primary.fileName);
         }
       })
       .catch(() => {});
-  }, []);
+  }, [studentId]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -257,11 +267,13 @@ export default function FindInternships() {
   }, [jobs, searchQuery, selectedLocation, selectedWorkMode, selectedCategory]);
 
   // Check if job is applied
-  const getAppliedStatus = (company, position) => {
+  const getAppliedStatus = (job) => {
+    if (!job) return null;
     const found = applications.find(
       (a) =>
-        a.company?.toLowerCase() === company?.toLowerCase() ||
-        a.position?.toLowerCase() === position?.toLowerCase()
+        (a.jobId && job.id && Number(a.jobId) === Number(job.id)) ||
+        (a.company?.trim().toLowerCase() === job.company?.trim().toLowerCase() &&
+          a.position?.trim().toLowerCase() === job.title?.trim().toLowerCase())
     );
     return found ? found.status : null;
   };
@@ -282,7 +294,7 @@ export default function FindInternships() {
     setCoverNote('');
   };
 
-  // Submit Application
+  // Submit Application via Modal
   const handleApplySubmit = async (e) => {
     if (e) e.preventDefault();
     if (!selectedJob) return;
@@ -297,52 +309,84 @@ export default function FindInternships() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/students/1/applications', {
+      const res = await fetch(`http://localhost:5000/api/students/${studentId}/applications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       if (res.ok) {
         const data = await res.json();
         setApplications((prev) => [data.application, ...prev]);
+        setJobs((prevJobs) =>
+          prevJobs.map((j) => (j.id === selectedJob.id ? { ...j, applicants: (j.applicants || 0) + 1 } : j))
+        );
+        showToast(`🎉 Successfully applied to ${selectedJob.company} for ${selectedJob.title}!`);
+        setSelectedJob(null);
       } else {
-        throw new Error('Local fallback');
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to submit application. Please try again.', 'error');
       }
     } catch {
-      // Local fallback
-      const newApp = {
-        id: Date.now(),
-        studentId: 1,
-        company: selectedJob.company,
-        position: selectedJob.title,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        status: 'reviewing',
-      };
-      setApplications((prev) => [newApp, ...prev]);
+      showToast('Network error while applying. Please check your connection.', 'error');
     } finally {
       setIsSubmitting(false);
-      showToast(`🎉 Successfully applied to ${selectedJob.company} for ${selectedJob.title}!`);
-      setSelectedJob(null);
     }
   };
 
   // 1-Click Quick Apply
-  const handleQuickApply = (job) => {
-    const primary = documents.find((d) => d.isPrimary) || documents[0];
-    const resumeName = primary ? primary.fileName : 'Alex_Johnson_Resume_2026.pdf';
+  const handleQuickApply = async (job) => {
+    if (quickApplyingJobId) return;
 
-    const newApp = {
-      id: Date.now(),
-      studentId: 1,
+    // Check if already applied
+    const existingStatus = getAppliedStatus(job);
+    if (existingStatus) {
+      showToast(`You have already applied for this position at ${job.company}.`, 'info');
+      return;
+    }
+
+    setQuickApplyingJobId(job.id);
+
+    const primary = documents.find((d) => d.isPrimary) || documents[0];
+    const resumeName = primary ? primary.fileName : 'Primary_Resume.pdf';
+
+    const payload = {
+      jobId: job.id,
       company: job.company,
       position: job.title,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      status: 'reviewing',
-      resumeAttached: resumeName,
+      resumeName,
+      coverNote: 'Applied via 1-Click Quick Apply',
     };
 
-    setApplications((prev) => [newApp, ...prev]);
-    showToast(`⚡ 1-Click Applied to ${job.company} using ${resumeName}!`);
+    try {
+      const res = await fetch(`http://localhost:5000/api/students/${studentId}/applications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setApplications((prev) => [data.application, ...prev]);
+        setJobs((prevJobs) =>
+          prevJobs.map((j) => (j.id === job.id ? { ...j, applicants: (j.applicants || 0) + 1 } : j))
+        );
+        showToast(`⚡ 1-Click Applied to ${job.company} successfully using ${resumeName}!`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to submit application. Please try again.', 'error');
+      }
+    } catch {
+      showToast('Network error while applying. Please check your connection.', 'error');
+    } finally {
+      setQuickApplyingJobId(null);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
   };
 
   return (
@@ -350,7 +394,7 @@ export default function FindInternships() {
       <Sidebar
         subtitle="Student"
         navItems={navItems}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>
@@ -506,7 +550,8 @@ export default function FindInternships() {
             {/* Job Grid */}
             <div className={styles.jobGrid}>
               {filteredJobs.map((job) => {
-                const appStatus = getAppliedStatus(job.company, job.title);
+                const appStatus = getAppliedStatus(job);
+                const isQuickApplying = quickApplyingJobId === job.id;
                 return (
                   <div key={job.id} className={styles.jobCard}>
                     <div>
@@ -562,9 +607,14 @@ export default function FindInternships() {
                           <button
                             className={styles.applyBtn}
                             onClick={() => handleQuickApply(job)}
+                            disabled={isQuickApplying}
                             title="1-Click Apply with Primary Resume"
                           >
-                            <i className="bi bi-lightning-charge-fill" /> Quick Apply
+                            <i
+                              className={isQuickApplying ? "bi bi-arrow-repeat" : "bi bi-lightning-charge-fill"}
+                              style={{ marginRight: '5px' }}
+                            />
+                            {isQuickApplying ? 'Applying…' : 'Quick Apply'}
                           </button>
                         )}
                       </div>
@@ -584,37 +634,53 @@ export default function FindInternships() {
               My Internship Applications ({applications.length})
             </h2>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg)', textAlign: 'left', borderBottom: '1.5px solid var(--border)' }}>
-                    <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Company</th>
-                    <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Position</th>
-                    <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Applied Date</th>
-                    <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Attached Resume</th>
-                    <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {applications.map((app, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #f1f3f5' }}>
-                      <td style={{ padding: '14px', fontWeight: 700, color: 'var(--dark)' }}>{app.company}</td>
-                      <td style={{ padding: '14px', color: 'var(--text-secondary)' }}>{app.position}</td>
-                      <td style={{ padding: '14px', color: 'var(--text-muted)' }}>{app.date}</td>
-                      <td style={{ padding: '14px', color: 'var(--dark)', fontSize: '0.82rem' }}>
-                        <i className="bi bi-file-earmark-pdf" style={{ color: '#dc2626', marginRight: '6px' }} />
-                        {app.resumeAttached || 'Alex_Johnson_Resume_2026.pdf'}
-                      </td>
-                      <td style={{ padding: '14px' }}>
-                        <Badge variant={STATUS_MAP[app.status]?.variant || 'secondary'}>
-                          {STATUS_MAP[app.status]?.label || app.status}
-                        </Badge>
-                      </td>
+            {applications.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--bg)', borderRadius: '12px', border: '1px dashed var(--border)' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', margin: '0 auto 16px' }}>
+                  <i className="bi bi-file-earmark-text" />
+                </div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '8px' }}>No Submitted Applications Yet</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', maxWidth: '420px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+                  You haven't applied to any internships yet. Explore available company positions and submit your application to start your internship journey!
+                </p>
+                <Button variant="primary" onClick={() => setActiveView('search')}>
+                  <i className="bi bi-search" style={{ marginRight: '6px' }} />
+                  Explore Internship Openings
+                </Button>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg)', textAlign: 'left', borderBottom: '1.5px solid var(--border)' }}>
+                      <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Company</th>
+                      <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Position</th>
+                      <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Applied Date</th>
+                      <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Attached Resume</th>
+                      <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {applications.map((app, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #f1f3f5' }}>
+                        <td style={{ padding: '14px', fontWeight: 700, color: 'var(--dark)' }}>{app.company}</td>
+                        <td style={{ padding: '14px', color: 'var(--text-secondary)' }}>{app.position}</td>
+                        <td style={{ padding: '14px', color: 'var(--text-muted)' }}>{app.date}</td>
+                        <td style={{ padding: '14px', color: 'var(--dark)', fontSize: '0.82rem' }}>
+                          <i className="bi bi-file-earmark-pdf" style={{ color: '#dc2626', marginRight: '6px' }} />
+                          {app.resumeAttached || 'Resume.pdf'}
+                        </td>
+                        <td style={{ padding: '14px' }}>
+                          <Badge variant={STATUS_MAP[app.status]?.variant || 'secondary'}>
+                            {STATUS_MAP[app.status]?.label || app.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -663,54 +729,73 @@ export default function FindInternships() {
                 )}
 
                 {/* Application Section */}
-                <form onSubmit={handleApplySubmit} className={styles.applySection}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--dark)' }}>
-                    <i className="bi bi-send-fill" style={{ color: 'var(--primary)' }} /> Submit 4th-Year Application
-                  </h4>
-
-                  <div className={styles.applyDocSelector}>
-                    <label className={styles.applyLabel}>Select Resume / CV from Vault</label>
-                    <select
-                      className={styles.applySelect}
-                      value={selectedDoc}
-                      onChange={(e) => setSelectedDoc(e.target.value)}
-                    >
-                      {documents.map((doc) => (
-                        <option key={doc.id} value={doc.fileName}>
-                          {doc.fileName} {doc.isPrimary ? '(Primary Resume ⭐)' : `(${doc.type.toUpperCase()})`}
-                        </option>
-                      ))}
-                    </select>
+                {getAppliedStatus(selectedJob) ? (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <i className="bi bi-check-circle-fill" style={{ color: '#16a34a', fontSize: '1.4rem' }} />
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.94rem' }}>
+                          You have already submitted an application for this position
+                        </div>
+                        <div style={{ color: '#15803d', fontSize: '0.82rem', marginTop: '2px' }}>
+                          Current status: <strong>{STATUS_MAP[getAppliedStatus(selectedJob)]?.label || getAppliedStatus(selectedJob)}</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant={STATUS_MAP[getAppliedStatus(selectedJob)]?.variant || 'success'}>
+                      {STATUS_MAP[getAppliedStatus(selectedJob)]?.label || 'Applied'}
+                    </Badge>
                   </div>
+                ) : (
+                  <form onSubmit={handleApplySubmit} className={styles.applySection}>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--dark)' }}>
+                      <i className="bi bi-send-fill" style={{ color: 'var(--primary)' }} /> Submit 4th-Year Application
+                    </h4>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label className={styles.applyLabel}>Short Cover Note (Optional)</label>
-                    <textarea
-                      className={styles.applyTextarea}
-                      placeholder="Introduce yourself and explain why you're a great fit for this internship position..."
-                      value={coverNote}
-                      onChange={(e) => setCoverNote(e.target.value)}
-                    />
-                  </div>
+                    <div className={styles.applyDocSelector}>
+                      <label className={styles.applyLabel}>Select Resume / CV from Vault</label>
+                      <select
+                        className={styles.applySelect}
+                        value={selectedDoc}
+                        onChange={(e) => setSelectedDoc(e.target.value)}
+                      >
+                        {documents.map((doc) => (
+                          <option key={doc.id} value={doc.fileName}>
+                            {doc.fileName} {doc.isPrimary ? '(Primary Resume ⭐)' : `(${doc.type.toUpperCase()})`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
-                    <button
-                      type="button"
-                      className={styles.cancelBtn}
-                      onClick={() => setSelectedJob(null)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className={styles.submitApplyBtn}
-                      disabled={isSubmitting}
-                    >
-                      <i className="bi bi-send-fill" />
-                      {isSubmitting ? 'Submitting…' : 'Submit Application'}
-                    </button>
-                  </div>
-                </form>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label className={styles.applyLabel}>Short Cover Note (Optional)</label>
+                      <textarea
+                        className={styles.applyTextarea}
+                        placeholder="Introduce yourself and explain why you're a great fit for this internship position..."
+                        value={coverNote}
+                        onChange={(e) => setCoverNote(e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                      <button
+                        type="button"
+                        className={styles.cancelBtn}
+                        onClick={() => setSelectedJob(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className={styles.submitApplyBtn}
+                        disabled={isSubmitting}
+                      >
+                        <i className="bi bi-send-fill" />
+                        {isSubmitting ? 'Submitting…' : 'Submit Application'}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           </div>

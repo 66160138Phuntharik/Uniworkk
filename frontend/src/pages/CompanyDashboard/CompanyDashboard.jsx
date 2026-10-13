@@ -32,11 +32,32 @@ const APP_STATUS = {
 
 export default function CompanyDashboard() {
   const navigate = useNavigate();
+
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
+  const [companyName, setCompanyName] = useState(currentUser?.name || 'TechNova Solutions');
   const [jobs, setJobs] = useState(DEFAULT_JOBS);
   const [applicants, setApplicants] = useState(DEFAULT_APPLICANTS);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/companies/jobs?companyId=2')
+    // Fetch company profile for title
+    fetch('http://localhost:5000/api/companies/profile')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.profile && data.profile.companyName) {
+          setCompanyName(currentUser?.name || data.profile.companyName);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch live jobs from Supabase
+    fetch('http://localhost:5000/api/companies/jobs')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.jobs && data.jobs.length > 0) {
@@ -45,25 +66,34 @@ export default function CompanyDashboard() {
       })
       .catch(() => {});
 
+    // Fetch live applicants from Supabase
     fetch('http://localhost:5000/api/companies/applicants')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.applicants && data.applicants.length > 0) {
-          setApplicants(data.applicants.slice(0, 5));
+        if (data && data.applicants) {
+          setApplicants(data.applicants);
         }
       })
       .catch(() => {});
   }, []);
 
-  const totalApplicantsCount = jobs.reduce((sum, j) => sum + (j.applicants || 0), 0);
+  const totalApplicantsCount = applicants.length;
   const activeJobsCount = jobs.filter((j) => j.status === 'open').length;
+  const acceptedCount = applicants.filter((a) => a.status === 'accepted').length;
+  const pendingCount = applicants.filter((a) => a.status === 'reviewing' || a.status === 'interviewing').length;
+
+  const handleLogout = () => {
+    localStorage.removeItem('uniwork_user');
+    localStorage.removeItem('uniwork_token');
+    navigate('/login');
+  };
 
   return (
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
         navItems={getCompanyNavItems('dashboard', navigate, applicants.length)}
-        onLogout={() => navigate('/login')}
+        onLogout={handleLogout}
       />
 
       <main className={styles.main}>
@@ -71,7 +101,7 @@ export default function CompanyDashboard() {
         <header className={styles.header}>
           <div>
             <h1 className={styles.heading}>Company Dashboard</h1>
-            <p className={styles.companyName}>TechNova Solutions</p>
+            <p className={styles.companyName}>{companyName}</p>
           </div>
           <div className={styles.headerRight}>
             <button
@@ -86,7 +116,7 @@ export default function CompanyDashboard() {
               style={{ cursor: 'pointer' }}
               title="View Company Profile"
             >
-              T
+              {companyName.charAt(0)}
             </div>
           </div>
         </header>
@@ -94,9 +124,9 @@ export default function CompanyDashboard() {
         {/* ── Stats ───────────────────────────────────────── */}
         <div className={styles.statsRow}>
           <StatCard label="Active Job Listings" value={String(activeJobsCount)} unit="jobs" />
-          <StatCard label="Total Applicants" value={String(totalApplicantsCount || 25)} unit="students" />
-          <StatCard label="Accepted Candidates" value="1" unit="students" accent="success" />
-          <StatCard label="Pending Review" value="2" unit="students" accent="warning" />
+          <StatCard label="Total Applicants" value={String(totalApplicantsCount)} unit="students" />
+          <StatCard label="Accepted Candidates" value={String(acceptedCount)} unit="students" accent="success" />
+          <StatCard label="Pending Review" value={String(pendingCount)} unit="students" accent="warning" />
         </div>
 
         {/* ── Content Grid ────────────────────────────────── */}
