@@ -2,12 +2,13 @@ const supabase = require('../config/supabase');
 
 // GET /api/companies/jobs
 const getJobs = async (req, res) => {
-  const { status, location, search, companyId } = req.query;
+  const { status, location, search, companyId, company } = req.query;
 
   try {
     let query = supabase.from('jobs').select('*').order('id', { ascending: false });
 
     if (companyId) query = query.eq('company_id', parseInt(companyId));
+    if (company && company !== 'all') query = query.ilike('company', `%${company.trim()}%`);
     if (status) query = query.eq('status', status);
     if (location) query = query.ilike('location', `%${location}%`);
 

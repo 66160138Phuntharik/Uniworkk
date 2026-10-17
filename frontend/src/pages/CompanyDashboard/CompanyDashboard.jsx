@@ -34,8 +34,12 @@ export default function CompanyDashboard() {
   const [applicants, setApplicants] = useState([]);
 
   useEffect(() => {
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+    const companyParam = currentUser?.name ? `?company=${encodeURIComponent(currentUser.name)}` : '';
+
     // Fetch company profile for title
-    fetch('http://localhost:5000/api/companies/profile')
+    fetch(`http://localhost:5000/api/companies/profile${companyParam}`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile && data.profile.companyName) {
@@ -45,7 +49,7 @@ export default function CompanyDashboard() {
       .catch(() => {});
 
     // Fetch live jobs from Supabase
-    fetch('http://localhost:5000/api/companies/jobs')
+    fetch(`http://localhost:5000/api/companies/jobs${companyParam}`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.jobs)) {
@@ -55,7 +59,7 @@ export default function CompanyDashboard() {
       .catch(() => {});
 
     // Fetch live applicants from Supabase
-    fetch('http://localhost:5000/api/companies/applicants')
+    fetch(`http://localhost:5000/api/companies/applicants${companyParam}`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.applicants)) {
@@ -63,7 +67,7 @@ export default function CompanyDashboard() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [currentUser?.name]);
 
   const totalApplicantsCount = applicants.length;
   const activeJobsCount = jobs.filter((j) => j.status === 'open').length;

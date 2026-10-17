@@ -1,7 +1,7 @@
 /**
  * Shared navigation items for all Company portal pages
  */
-export function getCompanyNavItems(activeKey, navigate, applicantCount = 5) {
+export function getCompanyNavItems(activeKey, navigate, applicantCount = 0) {
   return [
     {
       iconClass: 'bi-grid-1x2-fill',

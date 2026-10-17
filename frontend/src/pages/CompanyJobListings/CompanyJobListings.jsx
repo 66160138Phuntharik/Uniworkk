@@ -26,6 +26,14 @@ export default function CompanyJobListings() {
   const [toast, setToast] = useState(null);
   const [deleteTargetJob, setDeleteTargetJob] = useState(null);
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(null), 3500);
@@ -33,7 +41,11 @@ export default function CompanyJobListings() {
 
   // Fetch real data from backend server
   useEffect(() => {
-    fetch('http://localhost:5000/api/companies/jobs')
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+    const companyParam = currentUser?.name ? `?company=${encodeURIComponent(currentUser.name)}` : '';
+
+    fetch(`http://localhost:5000/api/companies/jobs${companyParam}`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.jobs)) {
@@ -41,7 +53,7 @@ export default function CompanyJobListings() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [currentUser?.name]);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -89,9 +101,13 @@ export default function CompanyJobListings() {
 
     // Backend sync
     try {
+      const token = localStorage.getItem('uniwork_token');
       await fetch(`http://localhost:5000/api/companies/jobs/${jobId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ status: newStatus }),
       });
     } catch {
@@ -109,8 +125,12 @@ export default function CompanyJobListings() {
     showToast(`Job listing "${title}" was successfully deleted`);
 
     try {
+      const token = localStorage.getItem('uniwork_token');
       await fetch(`http://localhost:5000/api/companies/jobs/${id}`, {
         method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
     } catch {
       // Handled optimistically
@@ -127,7 +147,7 @@ export default function CompanyJobListings() {
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
-        navItems={getCompanyNavItems('jobs', navigate, 5)}
+        navItems={getCompanyNavItems('jobs', navigate, stats.totalApplicants)}
         onLogout={handleLogout}
       />
 
@@ -137,7 +157,7 @@ export default function CompanyJobListings() {
           <div>
             <h1 className={styles.heading}>My Job Listings</h1>
             <p className={styles.subheading}>
-              TechNova Solutions · Manage active internships & employment postings
+              {currentUser?.name || 'Company Workspace'} · Manage active internships & employment postings
             </p>
           </div>
           <div className={styles.headerActions}>

@@ -56,7 +56,10 @@ export default function StudentProfile() {
 
   // Try fetching real API data if backend is available
   useEffect(() => {
-    fetch(`http://localhost:5000/api/students/${studentId}/profile`)
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+    fetch(`http://localhost:5000/api/students/${studentId}/profile`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile) {
@@ -84,10 +87,14 @@ export default function StudentProfile() {
   // Save Profile Handler
   const handleSaveProfile = async () => {
     setIsSaving(true);
+    const token = localStorage.getItem('uniwork_token');
     try {
       const res = await fetch(`http://localhost:5000/api/students/${studentId}/profile`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(profile),
       });
       if (res.ok) {

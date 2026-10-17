@@ -40,7 +40,10 @@ export default function StudentDashboard() {
 
   // Fetch live student profile and stats
   useEffect(() => {
-    fetch(`http://localhost:5000/api/students/${studentId}/profile`)
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+    fetch(`http://localhost:5000/api/students/${studentId}/profile`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile) {
@@ -49,7 +52,7 @@ export default function StudentDashboard() {
       })
       .catch(() => {});
 
-    fetch(`http://localhost:5000/api/students/${studentId}/applications`)
+    fetch(`http://localhost:5000/api/students/${studentId}/applications`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.applications) {
@@ -58,7 +61,7 @@ export default function StudentDashboard() {
       })
       .catch(() => {});
 
-    fetch(`http://localhost:5000/api/students/${studentId}/reports`)
+    fetch(`http://localhost:5000/api/students/${studentId}/reports`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.reports) {

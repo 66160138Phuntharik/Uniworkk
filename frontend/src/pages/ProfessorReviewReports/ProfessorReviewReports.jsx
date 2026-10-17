@@ -113,12 +113,16 @@ export default function ProfessorReviewReports() {
     }
 
     setIsSaving(true);
+    const token = localStorage.getItem('uniwork_token');
     try {
       const response = await fetch(
         `http://localhost:5000/api/professors/reports/${selectedReport.id}/feedback`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ feedback: feedbackInput.trim() }),
         }
       );

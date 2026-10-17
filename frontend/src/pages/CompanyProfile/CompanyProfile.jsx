@@ -38,8 +38,10 @@ export default function CompanyProfile() {
 
   // Fetch company profile on mount
   useEffect(() => {
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
     const q = currentUser?.name ? `?company=${encodeURIComponent(currentUser.name)}` : '';
-    fetch(`http://localhost:5000/api/companies/profile${q}`)
+    fetch(`http://localhost:5000/api/companies/profile${q}`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile) {
@@ -57,11 +59,15 @@ export default function CompanyProfile() {
   const handleSave = async (e) => {
     e?.preventDefault();
     setIsSaving(true);
+    const token = localStorage.getItem('uniwork_token');
 
     try {
       await fetch('http://localhost:5000/api/companies/profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(profile),
       });
     } catch {
@@ -82,7 +88,7 @@ export default function CompanyProfile() {
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
-        navItems={getCompanyNavItems('profile', navigate, 5)}
+        navItems={getCompanyNavItems('profile', navigate)}
         onLogout={handleLogout}
       />
 

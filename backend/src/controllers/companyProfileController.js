@@ -12,12 +12,6 @@ const getCompanyProfile = async (req, res) => {
 
     let { data, error } = await query.limit(1).maybeSingle();
 
-    if (!data && companyName) {
-      // Try fetching any first company profile
-      const fallbackQuery = await supabase.from('company_profiles').select('*').limit(1).maybeSingle();
-      data = fallbackQuery.data;
-    }
-
     if (error) {
       console.error('Supabase getCompanyProfile error:', error.message);
       return res.status(500).json({ error: error.message });
@@ -73,7 +67,7 @@ const updateCompanyProfile = async (req, res) => {
     const companyName = req.body.companyName || req.user?.name;
 
     // Check existing
-    let targetId = 1;
+    let targetId = null;
     const { data: existing } = await supabase
       .from('company_profiles')
       .select('id')
@@ -82,6 +76,14 @@ const updateCompanyProfile = async (req, res) => {
 
     if (existing) {
       targetId = existing.id;
+    } else {
+      const { data: maxC } = await supabase
+        .from('company_profiles')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      targetId = (maxC?.id || 0) + 1;
     }
 
     const { data: updated, error } = await supabase

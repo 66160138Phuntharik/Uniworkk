@@ -54,7 +54,7 @@ const applyForJob = async (req, res) => {
       .eq('student_id', studentId);
 
     if (jobId) {
-      existingQuery = existingQuery.or(`job_id.eq.${parseInt(jobId)},and(company.eq.${company},position.eq.${position})`);
+      existingQuery = existingQuery.eq('job_id', parseInt(jobId));
     } else {
       existingQuery = existingQuery.eq('company', company).eq('position', position);
     }
@@ -71,6 +71,8 @@ const applyForJob = async (req, res) => {
       .order('id', { ascending: false })
       .limit(1)
       .maybeSingle();
+    const nextAppId = (maxA?.id || 0) + 1;
+
     let finalResumeAttached = resumeName;
     if (!finalResumeAttached) {
       try {

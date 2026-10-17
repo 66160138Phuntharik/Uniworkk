@@ -17,6 +17,14 @@ export default function CompanyApplicants() {
   const [previewCandidate, setPreviewCandidate] = useState(null);
   const [toast, setToast] = useState(null);
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('uniwork_user') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(null), 3500);
@@ -24,7 +32,11 @@ export default function CompanyApplicants() {
 
   // Fetch real data from backend
   useEffect(() => {
-    fetch('http://localhost:5000/api/companies/applicants')
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+    const companyParam = currentUser?.name ? `?company=${encodeURIComponent(currentUser.name)}` : '';
+
+    fetch(`http://localhost:5000/api/companies/applicants${companyParam}`, { headers: authHeaders })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.applicants)) {
@@ -32,7 +44,7 @@ export default function CompanyApplicants() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [currentUser?.name]);
 
   // Handle URL query parameter ?jobId=... and ?jobTitle=...
   useEffect(() => {
@@ -107,11 +119,15 @@ export default function CompanyApplicants() {
     );
 
     try {
+      const token = localStorage.getItem('uniwork_token');
       await fetch(
         `http://localhost:5000/api/companies/applicants/${applicantId}/status`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ status: newStatus }),
         }
       );
@@ -140,7 +156,7 @@ export default function CompanyApplicants() {
           <div>
             <h1 className={styles.heading}>Applicant Management</h1>
             <p className={styles.subheading}>
-              TechNova Solutions · Review applications, inspect student CVs, and manage recruitment pipeline
+              {currentUser?.name || 'Company Workspace'} · Review applications, inspect student CVs, and manage recruitment pipeline
               {positionFilter !== 'All Positions' && (
                 <span className={styles.activeJobFilterBadge}>
                   · Filtered by: <strong>{positionFilter}</strong>

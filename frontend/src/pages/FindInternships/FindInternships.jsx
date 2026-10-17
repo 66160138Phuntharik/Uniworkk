@@ -50,7 +50,6 @@ export default function FindInternships() {
   const [selectedDoc, setSelectedDoc] = useState('');
   const [coverNote, setCoverNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [quickApplyingJobId, setQuickApplyingJobId] = useState(null);
 
   // Nav Items
   const navItems = [
@@ -68,6 +67,9 @@ export default function FindInternships() {
 
   // Fetch real data from backend server
   useEffect(() => {
+    const token = localStorage.getItem('uniwork_token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
     fetch('http://localhost:5000/api/companies/jobs')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -77,25 +79,32 @@ export default function FindInternships() {
       })
       .catch(() => {});
 
-    fetch(`http://localhost:5000/api/students/${studentId}/applications`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.applications) {
-          setApplications(data.applications);
-        }
+    if (studentId) {
+      fetch(`http://localhost:5000/api/students/${studentId}/applications`, {
+        headers: authHeaders,
       })
-      .catch(() => {});
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.applications) {
+            setApplications(data.applications);
+          }
+        })
+        .catch(() => {});
 
-    fetch(`http://localhost:5000/api/students/${studentId}/documents`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.documents) {
-          setDocuments(data.documents);
-          const primary = data.documents.find((d) => d.isPrimary) || data.documents[0];
-          if (primary) setSelectedDoc(primary.fileName);
-        }
+      fetch(`http://localhost:5000/api/students/${studentId}/documents`, {
+        headers: authHeaders,
       })
-      .catch(() => {});
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.documents) {
+            setDocuments(data.documents);
+            if (data.documents.length > 0) {
+              setSelectedDoc(data.documents[0].fileName);
+            }
+          }
+        })
+        .catch(() => {});
+    }
   }, [studentId]);
 
   const showToast = (message, type = 'success') => {
@@ -167,18 +176,23 @@ export default function FindInternships() {
     if (!selectedJob) return;
 
     setIsSubmitting(true);
+    const token = localStorage.getItem('uniwork_token');
+    const chosenResume = selectedDoc || (documents[0]?.fileName) || 'Resume.pdf';
     const payload = {
       jobId: selectedJob.id,
       company: selectedJob.company,
       position: selectedJob.title,
-      resumeName: selectedDoc || 'Primary_Resume.pdf',
+      resumeName: chosenResume,
       coverNote,
     };
 
     try {
       const res = await fetch(`http://localhost:5000/api/students/${studentId}/applications`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
 
@@ -198,55 +212,6 @@ export default function FindInternships() {
       showToast('Network error while applying. Please check your connection.', 'error');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // 1-Click Quick Apply
-  const handleQuickApply = async (job) => {
-    if (quickApplyingJobId) return;
-
-    // Check if already applied
-    const existingStatus = getAppliedStatus(job);
-    if (existingStatus) {
-      showToast(`You have already applied for this position at ${job.company}.`, 'info');
-      return;
-    }
-
-    setQuickApplyingJobId(job.id);
-
-    const primary = documents.find((d) => d.isPrimary) || documents[0];
-    const resumeName = primary ? primary.fileName : 'Primary_Resume.pdf';
-
-    const payload = {
-      jobId: job.id,
-      company: job.company,
-      position: job.title,
-      resumeName,
-      coverNote: 'Applied via 1-Click Quick Apply',
-    };
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/students/${studentId}/applications`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setApplications((prev) => [data.application, ...prev]);
-        setJobs((prevJobs) =>
-          prevJobs.map((j) => (j.id === job.id ? { ...j, applicants: (j.applicants || 0) + 1 } : j))
-        );
-        showToast(`⚡ 1-Click Applied to ${job.company} successfully using ${resumeName}!`);
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        showToast(errData.error || 'Failed to submit application. Please try again.', 'error');
-      }
-    } catch {
-      showToast('Network error while applying. Please check your connection.', 'error');
-    } finally {
-      setQuickApplyingJobId(null);
     }
   };
 
@@ -418,7 +383,6 @@ export default function FindInternships() {
             <div className={styles.jobGrid}>
               {filteredJobs.map((job) => {
                 const appStatus = getAppliedStatus(job);
-                const isQuickApplying = quickApplyingJobId === job.id;
                 return (
                   <div key={job.id} className={styles.jobCard}>
                     <div>
@@ -455,7 +419,7 @@ export default function FindInternships() {
 
                     <div className={styles.jobFooter}>
                       <div className={styles.applicantInfo}>
-                        <i className="bi bi-people" /> {job.applicants} applied
+                        <i className="bi bi-people" /> {job.applicants || 0} applied
                       </div>
 
                       <div className={styles.cardActionBtns}>
@@ -463,7 +427,7 @@ export default function FindInternships() {
                           className={styles.detailsBtn}
                           onClick={() => handleOpenJobModal(job)}
                         >
-                          Details
+                          <i className="bi bi-info-circle" /> Details
                         </button>
 
                         {appStatus ? (
@@ -473,15 +437,9 @@ export default function FindInternships() {
                         ) : (
                           <button
                             className={styles.applyBtn}
-                            onClick={() => handleQuickApply(job)}
-                            disabled={isQuickApplying}
-                            title="1-Click Apply with Primary Resume"
+                            onClick={() => handleOpenJobModal(job)}
                           >
-                            <i
-                              className={isQuickApplying ? "bi bi-arrow-repeat" : "bi bi-lightning-charge-fill"}
-                              style={{ marginRight: '5px' }}
-                            />
-                            {isQuickApplying ? 'Applying…' : 'Quick Apply'}
+                            <i className="bi bi-send" /> Apply Now
                           </button>
                         )}
                       </div>
@@ -621,17 +579,23 @@ export default function FindInternships() {
 
                     <div className={styles.applyDocSelector}>
                       <label className={styles.applyLabel}>Select Resume / CV from Vault</label>
-                      <select
-                        className={styles.applySelect}
-                        value={selectedDoc}
-                        onChange={(e) => setSelectedDoc(e.target.value)}
-                      >
-                        {documents.map((doc) => (
-                          <option key={doc.id} value={doc.fileName}>
-                            {doc.fileName} {doc.isPrimary ? '(Primary Resume ⭐)' : `(${doc.type.toUpperCase()})`}
-                          </option>
-                        ))}
-                      </select>
+                      {documents.length > 0 ? (
+                        <select
+                          className={styles.applySelect}
+                          value={selectedDoc}
+                          onChange={(e) => setSelectedDoc(e.target.value)}
+                        >
+                          {documents.map((doc) => (
+                            <option key={doc.id} value={doc.fileName}>
+                              {doc.title || doc.fileName} ({doc.type.toUpperCase()})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div style={{ fontSize: '0.85rem', color: '#64748b', padding: '6px 0' }}>
+                          <i className="bi bi-file-earmark-text" /> Default System Document (You can upload your real Resume in Profile &amp; Resume)
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

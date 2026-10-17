@@ -122,9 +122,13 @@ export default function CompanyPostJob() {
     };
 
     try {
+      const token = localStorage.getItem('uniwork_token');
       await fetch('http://localhost:5000/api/companies/jobs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
     } catch {
@@ -147,7 +151,7 @@ export default function CompanyPostJob() {
     <div className={styles.layout}>
       <Sidebar
         subtitle="Company"
-        navItems={getCompanyNavItems('post-job', navigate, 5)}
+        navItems={getCompanyNavItems('post-job', navigate)}
         onLogout={handleLogout}
       />
 
@@ -157,7 +161,7 @@ export default function CompanyPostJob() {
           <div>
             <h1 className={styles.heading}>Post New Internship / Job</h1>
             <p className={styles.subheading}>
-              TechNova Solutions · Publish a new vacancy to university students across Thailand
+              {currentUser?.name || 'Company Workspace'} · Publish a new vacancy to university students across Thailand
             </p>
           </div>
           <div className={styles.headerActions}>
