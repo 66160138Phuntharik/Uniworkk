@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import styles from './WeeklyReports.module.css';
 
@@ -13,6 +14,7 @@ const DEFAULT_STATS = {
 };
 
 export default function WeeklyReports() {
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -335,36 +337,70 @@ export default function WeeklyReports() {
               </button>
             </div>
           ) : (
-            reports.map((rep) => (
-              <article key={rep.id} className={styles.reportCard}>
-                {/* Card Header */}
-                <div className={styles.cardHeader}>
-                  <div className={styles.cardTitleBlock}>
-                    <span className={styles.weekTag}>
-                      <i className="bi bi-calendar-event" /> Week {rep.week}
-                    </span>
-                    <h3 className={styles.weekDates}>{rep.dateRange}</h3>
+            reports.map((rep) => {
+              const isReviewed = rep.status === 'reviewed' || rep.status === 'verified' || rep.status === 'approved';
+              return (
+                <article key={rep.id} className={styles.reportCard}>
+                  {/* Card Header */}
+                  <div className={styles.cardHeader}>
+                    <div className={styles.cardTitleBlock}>
+                      <span className={styles.weekTag}>
+                        <i className="bi bi-calendar-event" /> {language === 'th' ? `สัปดาห์ที่ ${rep.week}` : `Week ${rep.week}`}
+                      </span>
+                      <h3 className={styles.weekDates}>{rep.dateRange}</h3>
+                    </div>
+
+                    <div className={styles.cardHeaderRight}>
+                      <span className={`${styles.statusBadge} ${isReviewed ? styles.statusReviewed : styles.statusPending}`}>
+                        <i className={isReviewed ? 'bi bi-check-circle-fill' : 'bi bi-clock-history'} />
+                        {isReviewed 
+                          ? (language === 'th' ? 'ตรวจแล้ว' : 'Reviewed') 
+                          : (language === 'th' ? 'รออาจารย์ตรวจ' : 'Pending Review')}
+                      </span>
+                      <div className={styles.submittedDateNote}>
+                        <i className="bi bi-clock" /> {language === 'th' ? 'ส่งเมื่อ: ' : 'Submitted: '}{rep.submittedDate}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className={styles.submittedDateNote}>
-                    <i className="bi bi-clock-history" /> Submitted: {rep.submittedDate}
+                  {/* Single Large Content Text */}
+                  <p className={styles.reportContent}>{rep.content}</p>
+
+                  {/* Advisor Feedback Block */}
+                  {rep.feedback ? (
+                    <div className={styles.feedbackBox}>
+                      <div className={styles.feedbackHeader}>
+                        <div className={styles.feedbackTitle}>
+                          <i className="bi bi-chat-quote-fill" />
+                          <span>{language === 'th' ? 'ความคิดเห็น / ข้อเสนอแนะจากอาจารย์ที่ปรึกษา' : "Advisor's Feedback & Comments"}</span>
+                        </div>
+                        {rep.feedbackDate && (
+                          <span className={styles.feedbackDate}>
+                            <i className="bi bi-calendar3" /> {language === 'th' ? 'วันที่ตรวจ: ' : 'Reviewed on: '}{rep.feedbackDate}
+                          </span>
+                        )}
+                      </div>
+                      <div className={styles.feedbackText}>{rep.feedback}</div>
+                    </div>
+                  ) : (
+                    <div className={styles.feedbackPendingBox}>
+                      <i className="bi bi-hourglass-split" />
+                      <span>{language === 'th' ? 'ยังไม่มีความคิดเห็นจากอาจารย์ (กำลังรอการตรวจ)' : 'No feedback yet (Pending review from your advisor)'}</span>
+                    </div>
+                  )}
+
+                  {/* Card Footer Actions */}
+                  <div className={styles.cardFooter}>
+                    <button
+                      className={styles.editBtn}
+                      onClick={() => handleOpenEditModal(rep)}
+                    >
+                      <i className="bi bi-pencil-square" /> {language === 'th' ? 'แก้ไขรายงาน' : 'Edit Report'}
+                    </button>
                   </div>
-                </div>
-
-                {/* Single Large Content Text */}
-                <p className={styles.reportContent}>{rep.content}</p>
-
-                {/* Card Footer Actions */}
-                <div className={styles.cardFooter}>
-                  <button
-                    className={styles.editBtn}
-                    onClick={() => handleOpenEditModal(rep)}
-                  >
-                    <i className="bi bi-pencil-square" /> Edit Report
-                  </button>
-                </div>
-              </article>
-            ))
+                </article>
+              );
+            })
           )}
         </div>
 

@@ -150,6 +150,8 @@ const submitReport = async (req, res) => {
       content: saved.content,
       submittedDate: saved.submitted_date,
       status: saved.status,
+      feedback: saved.feedback || '',
+      feedbackDate: saved.feedback_date || null,
     };
     return res.status(201).json({ message: `Weekly report for Week ${weekNum} saved successfully!`, report: formatted });
   } catch (err) {
