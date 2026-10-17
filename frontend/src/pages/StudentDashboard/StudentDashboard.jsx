@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import StatCard from '../../components/StatCard/StatCard';
 import Badge from '../../components/Badge/Badge';
 import styles from './StudentDashboard.module.css';
 
-const STATUS_MAP = {
-  accepted: { label: 'Accepted', variant: 'success' },
-  interviewing: { label: 'Interview Scheduled', variant: 'warning' },
-  reviewing: { label: 'Under Review', variant: 'secondary' },
-  rejected: { label: 'Rejected', variant: 'danger' },
-};
-
 export default function StudentDashboard() {
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
+
 
   const currentUser = (() => {
     try {
@@ -100,25 +96,37 @@ export default function StudentDashboard() {
     if (daysLeft === 0) {
       return {
         days: 0,
-        text: 'ตัดรอบวันนี้! (ก่อน 23:59 น.)',
+        text: t('cutoffToday'),
         badgeClass: styles.cutoffUrgent,
         icon: 'bi-exclamation-triangle-fill',
       };
     } else if (daysLeft === 1) {
       return {
         days: 1,
-        text: 'เหลืออีก 1 วัน (ตัดรอบวันอาทิตย์นี้)',
+        text: t('cutoffTomorrow'),
         badgeClass: styles.cutoffWarning,
         icon: 'bi-alarm-fill',
       };
     } else {
       return {
         days: daysLeft,
-        text: `เหลืออีก ${daysLeft} วัน (ตัดรอบวันอาทิตย์)`,
+        text: t('cutoffDaysLeft').replace('{days}', daysLeft),
         badgeClass: styles.cutoffNormal,
         icon: 'bi-calendar-check-fill',
       };
     }
+  };
+
+  const getStatusBadge = (status) => {
+    const key = `status_${status}`;
+    const label = t(key) || status;
+    const variantMap = {
+      accepted: 'success',
+      interviewing: 'warning',
+      reviewing: 'secondary',
+      rejected: 'danger',
+    };
+    return { label, variant: variantMap[status] || 'secondary' };
   };
 
   const cutoffInfo = getSundayCutoffInfo();
@@ -136,7 +144,7 @@ export default function StudentDashboard() {
       <main className={styles.main}>
         {/* ── Header ─────────────────────────────────────── */}
         <header className={styles.header}>
-          <h1 className={styles.greeting}>Welcome, {firstName}! 👋</h1>
+          <h1 className={styles.greeting}>{t('welcomeGreeting')}, {firstName}! 👋</h1>
           <div
             className={styles.userChip}
             style={{ cursor: 'pointer' }}
@@ -155,28 +163,28 @@ export default function StudentDashboard() {
         {profile.status === 'placed' && profile.company && (
           <div className={styles.alertSuccess} role="alert">
             <div>
-              <div className={styles.alertTitle}>🎉 Congratulations! You've been placed!</div>
+              <div className={styles.alertTitle}>🎉 {language === 'th' ? 'ยินดีด้วย! คุณได้รับคัดเลือกเข้าฝึกงานแล้ว' : "Congratulations! You've been placed!"}</div>
               <div className={styles.alertText}>
-                {profile.company} has accepted you as a{' '}
-                <strong>{profile.position || 'Frontend Developer Intern'}</strong> — Starting June 1, 2026.
+                {profile.company} {language === 'th' ? 'ได้ตอบรับคุณเข้าฝึกงานตำแหน่ง' : 'has accepted you as a'}{' '}
+                <strong>{profile.position || 'Frontend Developer Intern'}</strong>
               </div>
             </div>
             <button className={styles.alertBtn} onClick={() => navigate('/student/profile')}>
-              View Details
+              {t('details')}
             </button>
           </div>
         )}
 
         {/* ── Stats ───────────────────────────────────────── */}
         <div className={styles.statsRow}>
-          <StatCard label="Applications Sent" value={String(applications.length)} unit="companies" />
-          <StatCard label="Interviews Scheduled" value={String(interviewsCount)} unit="companies" accent={interviewsCount > 0 ? 'warning' : ''} />
+          <StatCard label={t('applicationsSent')} value={String(applications.length)} unit={language === 'th' ? 'แห่ง' : 'companies'} />
+          <StatCard label={t('interviewsScheduled')} value={String(interviewsCount)} unit={language === 'th' ? 'แห่ง' : 'companies'} accent={interviewsCount > 0 ? 'warning' : ''} />
           
           {/* Enhanced Reports Submitted with Sunday Cut-off Reminder */}
           <div className={styles.reportCardStat}>
             <div>
               <div className={styles.reportCardStatHeader}>
-                <span className={styles.reportStatLabel}>Reports Submitted</span>
+                <span className={styles.reportStatLabel}>{t('reportsSubmitted')}</span>
                 {reportsCount < 16 && (
                   <button
                     type="button"
@@ -185,14 +193,14 @@ export default function StudentDashboard() {
                     title="Write next weekly report"
                   >
                     <i className="bi bi-pencil-square" />
-                    Write Week {nextReportWeek}
+                    {language === 'th' ? `เขียนสัปดาห์ที่ ${nextReportWeek}` : `Write Week ${nextReportWeek}`}
                   </button>
                 )}
               </div>
 
               <div className={styles.reportStatValue}>
                 <span>{reportsCount} / 16</span>
-                <span className={styles.reportStatUnit}>weeks ({progressPercent}%)</span>
+                <span className={styles.reportStatUnit}>{language === 'th' ? `สัปดาห์ (${progressPercent}%)` : `weeks (${progressPercent}%)`}</span>
               </div>
 
               <div className={styles.reportProgressBarBg}>
@@ -208,7 +216,7 @@ export default function StudentDashboard() {
               <div className={styles.reportReminderLeft}>
                 <i className="bi bi-clock-history" style={{ color: 'var(--primary)', fontSize: '0.9rem' }} />
                 <span>
-                  Next due: <span className={styles.reportReminderWeek}>Week {nextReportWeek}</span>
+                  {t('nextDue')}: <span className={styles.reportReminderWeek}>{language === 'th' ? `สัปดาห์ที่ ${nextReportWeek}` : `Week ${nextReportWeek}`}</span>
                 </span>
               </div>
               <span className={`${styles.reportCutoffBadge} ${cutoffInfo.badgeClass}`}>
@@ -223,12 +231,12 @@ export default function StudentDashboard() {
         <div className={styles.contentGrid}>
           {/* Application History */}
           <div className={styles.card}>
-            <h2 className={styles.cardTitle}>Recent Application History</h2>
+            <h2 className={styles.cardTitle}>{t('recentApplications')}</h2>
             {applications.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--text-muted)' }}>
                 <i className="bi bi-inbox" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px', color: '#cbd5e1' }} />
-                <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--dark)', marginBottom: '4px' }}>No internship applications yet</p>
-                <p style={{ fontSize: '0.88rem', marginBottom: '16px' }}>Explore open positions from partner companies and submit your first application.</p>
+                <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--dark)', marginBottom: '4px' }}>{t('noApplications')}</p>
+                <p style={{ fontSize: '0.88rem', marginBottom: '16px' }}>{language === 'th' ? 'ค้นหาตำแหน่งฝึกงานจากบริษัทพันธมิตรและส่งใบสมัครแรกของคุณ' : 'Explore open positions from partner companies and submit your first application.'}</p>
                 <button
                   type="button"
                   style={{
@@ -243,7 +251,7 @@ export default function StudentDashboard() {
                   }}
                   onClick={() => navigate('/student/internships')}
                 >
-                  Find Internships Now →
+                  {t('findInternshipsNow')}
                 </button>
               </div>
             ) : (
@@ -252,23 +260,23 @@ export default function StudentDashboard() {
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Company</th>
-                        <th>Position</th>
-                        <th>Date Applied</th>
-                        <th>Status</th>
+                        <th>{language === 'th' ? 'บริษัท' : 'Company'}</th>
+                        <th>{language === 'th' ? 'ตำแหน่ง' : 'Position'}</th>
+                        <th>{language === 'th' ? 'วันที่สมัคร' : 'Date Applied'}</th>
+                        <th>{language === 'th' ? 'สถานะ' : 'Status'}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {applications.slice(0, 5).map((app, i) => {
-                        const statusInfo = STATUS_MAP[app.status] || { label: app.status, variant: 'secondary' };
+                        const statusBadge = getStatusBadge(app.status);
                         return (
                           <tr key={app.id || i}>
                             <td className={styles.tdCompany}>{app.company}</td>
                             <td>{app.position}</td>
                             <td className={styles.tdDate}>{app.date}</td>
                             <td>
-                              <Badge variant={statusInfo.variant}>
-                                {statusInfo.label}
+                              <Badge variant={statusBadge.variant}>
+                                {statusBadge.label}
                               </Badge>
                             </td>
                           </tr>
@@ -283,12 +291,13 @@ export default function StudentDashboard() {
                   style={{ cursor: 'pointer', background: 'none', border: 'none', width: '100%' }}
                   onClick={() => navigate('/student/internships')}
                 >
-                  View all applications →
+                  {t('viewAll')} →
                 </button>
               </>
             )}
           </div>
         </div>
+
       </main>
     </div>
   );

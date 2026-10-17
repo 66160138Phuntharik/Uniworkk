@@ -1,32 +1,35 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './LandingPage.module.css';
 
 const FEATURES = [
   {
     icon: '🔍',
-    title: 'Find the Right Job',
-    desc: 'Students can quickly search for internships that match their major and interests, with one-click resume submission.',
+    titleKey: 'feature1Title',
+    descKey: 'feature1Desc',
   },
   {
     icon: '🏢',
-    title: 'Easy Recruitment',
-    desc: "Companies post listings in minutes and manage every applicant's status through a clean, dedicated dashboard.",
+    titleKey: 'feature2Title',
+    descKey: 'feature2Desc',
   },
   {
     icon: '📊',
-    title: 'Real-time Tracking',
-    desc: 'Professors monitor student placement status, review weekly reports, and provide guidance — all in one place.',
+    titleKey: 'feature3Title',
+    descKey: 'feature3Desc',
   },
 ];
 
 const STATS = [
-  { num: '500+', label: 'Students in System' },
-  { num: '150+', label: 'Partner Companies' },
-  { num: '300+', label: 'Open Positions' },
+  { num: '500+', labelKey: 'statStudents' },
+  { num: '150+', labelKey: 'statCompanies' },
+  { num: '300+', labelKey: 'statPositions' },
 ];
 
 export default function LandingPage() {
+  const { t } = useLanguage();
+
   return (
     <div className={styles.page}>
       <Navbar />
@@ -35,16 +38,15 @@ export default function LandingPage() {
       <section className={styles.hero}>
         <div className={styles.heroInner}>
           <h1 className={styles.heroTitle}>
-            Connect Your Future<br />with the Right Internship
+            {t('heroTitle1')}<br />{t('heroTitle2')}
           </h1>
           <p className={styles.heroSub}>
-            An internship portal connecting students, companies, and professors
-            seamlessly for the best experience.
+            {t('heroSub')}
           </p>
           <div className={styles.heroCtas}>
-            <Link to="/login?role=student"   className={styles.btnDark}>For Students</Link>
-            <Link to="/login?role=company"   className={styles.btnOutline}>For Companies</Link>
-            <Link to="/login?role=professor" className={styles.btnOutline}>For Professors</Link>
+            <Link to="/login?role=student"   className={styles.btnDark}>{t('forStudents')}</Link>
+            <Link to="/login?role=company"   className={styles.btnOutline}>{t('forCompanies')}</Link>
+            <Link to="/login?role=professor" className={styles.btnOutline}>{t('forProfessors')}</Link>
           </div>
         </div>
       </section>
@@ -52,13 +54,13 @@ export default function LandingPage() {
       {/* ── Features ──────────────────────────────────────── */}
       <section id="features" className={styles.features}>
         <div className={styles.sectionWrap}>
-          <h2 className={styles.sectionTitle}>Why UniWork?</h2>
+          <h2 className={styles.sectionTitle}>{t('whyUniwork')}</h2>
           <div className={styles.featureGrid}>
             {FEATURES.map((f) => (
-              <div key={f.title} className={styles.featureCard}>
+              <div key={f.titleKey} className={styles.featureCard}>
                 <span className={styles.featureIcon}>{f.icon}</span>
-                <h3 className={styles.featureTitle}>{f.title}</h3>
-                <p className={styles.featureDesc}>{f.desc}</p>
+                <h3 className={styles.featureTitle}>{t(f.titleKey)}</h3>
+                <p className={styles.featureDesc}>{t(f.descKey)}</p>
               </div>
             ))}
           </div>
@@ -69,9 +71,9 @@ export default function LandingPage() {
       <section className={styles.stats}>
         <div className={styles.statsGrid}>
           {STATS.map((s) => (
-            <div key={s.label} className={styles.statItem}>
+            <div key={s.labelKey} className={styles.statItem}>
               <span className={styles.statNum}>{s.num}</span>
-              <span className={styles.statLabel}>{s.label}</span>
+              <span className={styles.statLabel}>{t(s.labelKey)}</span>
             </div>
           ))}
         </div>
@@ -84,3 +86,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

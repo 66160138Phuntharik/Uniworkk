@@ -1,25 +1,27 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
+import LanguageSwitcher from '../../components/LanguageSwitcher/LanguageSwitcher';
 import styles from './LoginPage.module.css';
 
 const ROLES = [
   {
     id: 'student',
-    label: 'Student',
+    labelKey: 'role_student',
     icon: '🎓',
     placeholder: 'student@university.edu',
     dashboard: '/student/dashboard',
   },
   {
     id: 'company',
-    label: 'Company',
+    labelKey: 'role_company',
     icon: '🏢',
     placeholder: 'contact@company.com',
     dashboard: '/company/dashboard',
   },
   {
     id: 'professor',
-    label: 'Professor',
+    labelKey: 'role_professor',
     icon: '👨‍🏫',
     placeholder: 'professor@university.edu',
     dashboard: '/professor/dashboard',
@@ -27,6 +29,7 @@ const ROLES = [
 ];
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role') || 'student';
 
@@ -45,6 +48,7 @@ export default function LoginPage() {
 
   const navigate     = useNavigate();
   const selectedRole = ROLES.find((r) => r.id === role);
+
 
   const handleRoleChange = (id) => {
     setRole(id);
@@ -132,10 +136,15 @@ export default function LoginPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
+        {/* Language Switcher in Card Header */}
+        <div className={styles.cardTopBar}>
+          <LanguageSwitcher theme="light" />
+        </div>
+
         {/* Logo */}
         <Link to="/" className={styles.logo}>UniWork</Link>
         <p className={styles.subtitle}>
-          {mode === 'login' ? 'Sign in to access your workspace' : 'Create an account and start right away'}
+          {mode === 'login' ? t('loginTitle') : t('registerTitle')}
         </p>
 
         {/* Auth Mode Toggle (Sign In / Register) */}
@@ -145,14 +154,14 @@ export default function LoginPage() {
             className={`${styles.modeTab} ${mode === 'login' ? styles.modeTabActive : ''}`}
             onClick={() => handleModeChange('login')}
           >
-            Sign In (เข้าสู่ระบบ)
+            {t('signIn')}
           </button>
           <button
             type="button"
             className={`${styles.modeTab} ${mode === 'register' ? styles.modeTabActive : ''}`}
             onClick={() => handleModeChange('register')}
           >
-            Register (สมัครสมาชิก)
+            {t('register')}
           </button>
         </div>
 
@@ -166,7 +175,7 @@ export default function LoginPage() {
               onClick={() => handleRoleChange(r.id)}
             >
               <span className={styles.roleIcon}>{r.icon}</span>
-              <span className={styles.roleLabel}>{r.label}</span>
+              <span className={styles.roleLabel}>{t(r.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -189,7 +198,7 @@ export default function LoginPage() {
           {mode === 'register' && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="name">
-                Full Name (ชื่อ-นามสกุล)
+                {t('fullNameLabel')}
               </label>
               <input
                 id="name"
@@ -208,7 +217,7 @@ export default function LoginPage() {
             <div className={styles.formRow}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="studentCode">
-                  Student ID (รหัสนิสิต)
+                  {t('studentCodeLabel')}
                 </label>
                 <input
                   id="studentCode"
@@ -222,7 +231,7 @@ export default function LoginPage() {
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="major">
-                  Major / สาขา
+                  {t('majorLabel')}
                 </label>
                 <input
                   id="major"
@@ -240,7 +249,7 @@ export default function LoginPage() {
           {mode === 'register' && role === 'student' && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="faculty">
-                Faculty / คณะ
+                {t('facultyLabel')}
               </label>
               <input
                 id="faculty"
@@ -255,7 +264,7 @@ export default function LoginPage() {
 
           {/* Email */}
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">Email Address</label>
+            <label className={styles.label} htmlFor="email">{t('emailLabel')}</label>
             <input
               id="email"
               type="email"
@@ -269,13 +278,13 @@ export default function LoginPage() {
 
           {/* Password */}
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">Password</label>
+            <label className={styles.label} htmlFor="password">{t('passwordLabel')}</label>
             <div className={styles.pwWrap}>
               <input
                 id="password"
                 type={showPw ? 'text' : 'password'}
                 className={styles.input}
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -293,10 +302,10 @@ export default function LoginPage() {
 
           <button className={styles.submitBtn} type="submit" disabled={loading}>
             {loading
-              ? (mode === 'register' ? 'Registering account…' : 'Signing in…')
+              ? (mode === 'register' ? '...' : '...')
               : (mode === 'register'
-                  ? `Register as ${selectedRole.label}`
-                  : `Sign In as ${selectedRole.label}`)}
+                  ? `${t('registerBtn')} (${t(selectedRole.labelKey)})`
+                  : `${t('loginBtn')} (${t(selectedRole.labelKey)})`)}
           </button>
         </form>
 
@@ -304,34 +313,35 @@ export default function LoginPage() {
         <p className={styles.togglePrompt}>
           {mode === 'login' ? (
             <>
-              Don't have an account yet?
+              {t('noAccount')}{' '}
               <button
                 type="button"
                 className={styles.toggleBtn}
                 onClick={() => handleModeChange('register')}
               >
-                Register now
+                {t('signUpNow')}
               </button>
             </>
           ) : (
             <>
-              Already have an account?
+              {t('haveAccount')}{' '}
               <button
                 type="button"
                 className={styles.toggleBtn}
                 onClick={() => handleModeChange('login')}
               >
-                Sign in
+                {t('signInNow')}
               </button>
             </>
           )}
         </p>
 
         <div className={styles.footer}>
-          <Link to="/" className={styles.backLink}>← Back to Home</Link>
+          <Link to="/" className={styles.backLink}>← {t('back')}</Link>
         </div>
       </div>
     </div>
   );
 }
+
 

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LanguageProvider } from './context/LanguageContext';
 import LandingPage from './pages/LandingPage/LandingPage.jsx';
 import LoginPage from './pages/LoginPage/LoginPage.jsx';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard.jsx';
@@ -17,24 +18,26 @@ import NotFound from './pages/NotFound/NotFound.jsx';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/student/profile" element={<StudentProfile />} />
-        <Route path="/student/internships" element={<FindInternships />} />
-        <Route path="/student/reports" element={<WeeklyReports />} />
-        <Route path="/professor/dashboard" element={<ProfessorDashboard />} />
-        <Route path="/professor/students" element={<ProfessorStudentList />} />
-        <Route path="/professor/reports" element={<ProfessorReviewReports />} />
-        <Route path="/company/dashboard" element={<CompanyDashboard />} />
-        <Route path="/company/jobs" element={<CompanyJobListings />} />
-        <Route path="/company/applicants" element={<CompanyApplicants />} />
-        <Route path="/company/post-job" element={<CompanyPostJob />} />
-        <Route path="/company/profile" element={<CompanyProfile />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route path="/student/internships" element={<FindInternships />} />
+          <Route path="/student/reports" element={<WeeklyReports />} />
+          <Route path="/professor/dashboard" element={<ProfessorDashboard />} />
+          <Route path="/professor/students" element={<ProfessorStudentList />} />
+          <Route path="/professor/reports" element={<ProfessorReviewReports />} />
+          <Route path="/company/dashboard" element={<CompanyDashboard />} />
+          <Route path="/company/jobs" element={<CompanyJobListings />} />
+          <Route path="/company/applicants" element={<CompanyApplicants />} />
+          <Route path="/company/post-job" element={<CompanyPostJob />} />
+          <Route path="/company/profile" element={<CompanyProfile />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }
